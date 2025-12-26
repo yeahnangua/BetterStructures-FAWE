@@ -176,7 +176,8 @@ public class Schematic {
                         // special behavior: if it's not solid, replace with solid filler block
                         if (!worldBlock.getType().isSolid()) {
                             Material pedestalMaterial = pedestalMaterialProvider.apply(isGround);
-                            worldBlock.setType(pedestalMaterial);
+                            // Use setBlockData with false to disable physics updates
+                            worldBlock.setBlockData(pedestalMaterial.createBlockData(), false);
                             pasteBlocks.add(new PasteBlock(worldBlock, pedestalMaterial.createBlockData(), null));
                         }
                     } else {

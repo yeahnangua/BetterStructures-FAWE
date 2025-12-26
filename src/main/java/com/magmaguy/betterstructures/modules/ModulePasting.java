@@ -391,7 +391,7 @@ public final class ModulePasting {
 
         for (ChestPlacement chestPlacement : chestsToPlace) {
             Block block = chestPlacement.location.getBlock();
-            block.setType(chestPlacement.material);
+            block.setBlockData(chestPlacement.material.createBlockData(), false);
 
             if (block.getBlockData() instanceof Chest chest) {
                 block.setBlockData(chest, false);

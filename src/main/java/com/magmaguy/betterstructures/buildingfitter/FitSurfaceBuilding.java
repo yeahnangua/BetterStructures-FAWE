@@ -31,7 +31,9 @@ public class FitSurfaceBuilding extends FitAnything {
         //Note about the adjustments:
         //The 8 offset on x and y is to center the anchor on the chunk
         Location originalLocation = new Location(chunk.getWorld(), chunk.getX() * 16D, 0, chunk.getZ() * 16D).add(new Vector(8, 0, 8));
-        originalLocation.setY(originalLocation.getWorld().getHighestBlockYAt(originalLocation));
+        // Use chunk's loaded data to avoid sync chunk loading with FAWE
+        if (!chunk.isLoaded()) return;
+        originalLocation.setY(chunk.getWorld().getHighestBlockYAt(originalLocation));
         randomizeSchematicContainer(originalLocation, GeneratorConfigFields.StructureType.SURFACE);
         if (schematicClipboard == null) {
             //Bukkit.getLogger().info("Did not spawn structure in biome " + originalLocation.getBlock().getBiome() + " because no valid schematics exist for it.");

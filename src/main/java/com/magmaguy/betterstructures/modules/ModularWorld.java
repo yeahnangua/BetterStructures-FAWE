@@ -103,7 +103,7 @@ public class ModularWorld {
     public List<Block> spawnChests() {
         List<Block> chests = new ArrayList<>();
         for (Location chestLocation : chestLocations) {
-            chestLocation.getBlock().setType(Material.CHEST);
+            chestLocation.getBlock().setBlockData(Material.CHEST.createBlockData(), false);
             chests.add(chestLocation.getBlock());
         }
         return chests;
@@ -112,7 +112,7 @@ public class ModularWorld {
     public List<Block> spawnBarrels() {
         List<Block> barrels = new ArrayList<>();
         for (Location barrelLocation : barrelLocations) {
-            barrelLocation.getBlock().setType(Material.BARREL);
+            barrelLocation.getBlock().setBlockData(Material.BARREL.createBlockData(), false);
             barrels.add(barrelLocation.getBlock());
         }
         return barrels;

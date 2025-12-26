@@ -42,6 +42,13 @@ public class TerrainAdequacy {
     }
 
     private static boolean isBlockAdequate(Location projectedWorldLocation, Material schematicBlockMaterial, int floorHeight, ScanType scanType) {
+        // Check if chunk is loaded to avoid sync chunk loading with FAWE
+        if (!projectedWorldLocation.getWorld().isChunkLoaded(
+                projectedWorldLocation.getBlockX() >> 4,
+                projectedWorldLocation.getBlockZ() >> 4)) {
+            return true; // Assume adequate if chunk not loaded
+        }
+
         int floorYValue = projectedWorldLocation.getBlockY();
         if (projectedWorldLocation.getBlock().getType().equals(Material.VOID_AIR)) return false;
         switch (scanType) {

@@ -89,6 +89,7 @@ public final class BetterStructures extends JavaPlugin {
         commandManager.registerCommand(new SetupCommand());
         commandManager.registerCommand(new FirstTimeSetupCommand());
         commandManager.registerCommand(new GenerateModulesCommand());
+        commandManager.registerCommand(new CommandTestCommand());
         commandManager.registerCommand(new BetterStructuresCommand());
 
         MagmaCore.checkVersionUpdate("103241", "https://nightbreak.io/plugin/betterstructures/");

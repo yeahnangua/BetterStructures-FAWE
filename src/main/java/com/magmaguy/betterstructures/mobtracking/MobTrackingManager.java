@@ -15,6 +15,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -355,9 +356,9 @@ public class MobTrackingManager {
                     config.getRelativeZ()
             );
 
-            // Ensure chunk is loaded
-            if (!spawnLoc.getChunk().isLoaded()) {
-                spawnLoc.getChunk().load();
+            // Skip if chunk is not loaded to avoid sync chunk loading with FAWE
+            if (!spawnLoc.getWorld().isChunkLoaded(spawnLoc.getBlockX() >> 4, spawnLoc.getBlockZ() >> 4)) {
+                continue;
             }
 
             Entity spawnedMob = null;
@@ -366,7 +367,7 @@ public class MobTrackingManager {
                 case VANILLA:
                     try {
                         EntityType entityType = EntityType.valueOf(config.getMobIdentifier());
-                        spawnLoc.getBlock().setType(Material.AIR);
+                        spawnLoc.getBlock().setBlockData(Material.AIR.createBlockData(), false);
                         spawnLoc.add(new Vector(0.5, 0, 0.5));
                         spawnedMob = world.spawnEntity(spawnLoc, entityType);
                         if (spawnedMob instanceof LivingEntity) {
@@ -379,7 +380,7 @@ public class MobTrackingManager {
                     break;
 
                 case MYTHICMOBS:
-                    spawnLoc.getBlock().setType(Material.AIR);
+                    spawnLoc.getBlock().setBlockData(Material.AIR.createBlockData(), false);
                     spawnedMob = MythicMobs.spawnAndReturn(spawnLoc, config.getMobIdentifier());
                     break;
 
@@ -444,6 +445,39 @@ public class MobTrackingManager {
                 } catch (Exception ignored) {
                     // Sound might not exist on older versions
                 }
+            }
+        }
+    }
+
+    /**
+     * Test structure cleared commands at a player's location.
+     */
+    public void testCommands(Player player) {
+        Location loc = player.getLocation();
+        String worldName = loc.getWorld().getName();
+        int x = loc.getBlockX();
+        int y = loc.getBlockY();
+        int z = loc.getBlockZ();
+
+        Logger.info("Testing cleared commands for player " + player.getName() + " at " + worldName + " " + x + " " + y + " " + z);
+
+        for (String command : DefaultConfig.getStructureClearedCommands()) {
+            if (command == null || command.isEmpty()) continue;
+
+            String parsedCommand = command
+                    .replace("{player}", player.getName())
+                    .replace("{structure}", "TestStructure")
+                    .replace("{killer}", player.getName())
+                    .replace("{world}", worldName)
+                    .replace("{x}", String.valueOf(x))
+                    .replace("{y}", String.valueOf(y))
+                    .replace("{z}", String.valueOf(z));
+
+            try {
+                Logger.info("Executing test command: " + parsedCommand);
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsedCommand);
+            } catch (Exception e) {
+                Logger.warn("Failed to execute test command: " + parsedCommand + " - " + e.getMessage());
             }
         }
     }

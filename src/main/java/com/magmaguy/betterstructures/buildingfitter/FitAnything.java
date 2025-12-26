@@ -269,14 +269,21 @@ public class FitAnything {
         Location lowestCorner = location.clone().add(schematicOffset);
         for (int x = 0; x < schematicClipboard.getDimensions().x(); x++)
             for (int z = 0; z < schematicClipboard.getDimensions().z(); z++) {
+                Location blockLoc = lowestCorner.clone().add(new Vector(x, 0, z));
+                // Skip if chunk not loaded to avoid sync chunk loading
+                if (!blockLoc.getWorld().isChunkLoaded(blockLoc.getBlockX() >> 4, blockLoc.getBlockZ() >> 4)) {
+                    continue;
+                }
                 //Only add pedestals for areas with a solid floor, some schematics can have rounded air edges to better fit terrain
-                Block groundBlock = lowestCorner.clone().add(new Vector(x, 0, z)).getBlock();
+                Block groundBlock = blockLoc.getBlock();
                 if (groundBlock.getType().isAir()) continue;
                 for (int y = -1; y > -11; y--) {
                     Block block = lowestCorner.clone().add(new Vector(x, y, z)).getBlock();
-                    if (SurfaceMaterials.ignorable(block.getType()))
-                        block.setType(getPedestalMaterial(!block.getRelative(BlockFace.UP).getType().isSolid()));
-                    else {
+                    if (SurfaceMaterials.ignorable(block.getType())) {
+                        // Use setBlockData with false to disable physics updates
+                        Material pedestalMat = getPedestalMaterial(!block.getRelative(BlockFace.UP).getType().isSolid());
+                        block.setBlockData(pedestalMat.createBlockData(), false);
+                    } else {
                         //Pedestal only fills until it hits the first solid block
                         break;
                     }
@@ -289,13 +296,19 @@ public class FitAnything {
         boolean detectedTreeElement = true;
         for (int x = 0; x < schematicClipboard.getDimensions().x(); x++)
             for (int z = 0; z < schematicClipboard.getDimensions().z(); z++) {
+                Location blockLoc = highestCorner.clone().add(new Vector(x, 0, z));
+                // Skip if chunk not loaded to avoid sync chunk loading
+                if (!blockLoc.getWorld().isChunkLoaded(blockLoc.getBlockX() >> 4, blockLoc.getBlockZ() >> 4)) {
+                    continue;
+                }
                 for (int y = 0; y < 31; y++) {
                     if (!detectedTreeElement) break;
                     detectedTreeElement = false;
                     Block block = highestCorner.clone().add(new Vector(x, y, z)).getBlock();
                     if (SurfaceMaterials.ignorable(block.getType()) && !block.getType().isAir()) {
                         detectedTreeElement = true;
-                        block.setType(Material.AIR);
+                        // Use setBlockData with false to disable physics updates
+                        block.setBlockData(Material.AIR.createBlockData(), false);
                     }
                 }
             }
@@ -333,11 +346,14 @@ public class FitAnything {
         // Spawn vanilla mobs
         for (Vector entityPosition : schematicContainer.getVanillaSpawns().keySet()) {
             Location signLocation = LocationProjector.project(location, schematicOffset, entityPosition).clone();
-            signLocation.getBlock().setType(Material.AIR);
+            // Skip if chunk not loaded to avoid sync chunk loading with FAWE
+            if (!signLocation.getWorld().isChunkLoaded(signLocation.getBlockX() >> 4, signLocation.getBlockZ() >> 4)) {
+                continue;
+            }
+            // Use setBlockData with false to disable physics updates
+            signLocation.getBlock().setBlockData(Material.AIR.createBlockData(), false);
             //If mobs spawn in corners they might choke on adjacent walls
             signLocation.add(new Vector(0.5, 0, 0.5));
-            //I think FAWE is messing with this
-            signLocation.getChunk().load();
             EntityType entityType = schematicContainer.getVanillaSpawns().get(entityPosition);
             Entity entity = signLocation.getWorld().spawnEntity(signLocation, entityType);
             entity.setPersistent(true);
@@ -369,7 +385,11 @@ public class FitAnything {
         // Spawn EliteMobs bosses
         for (Vector elitePosition : schematicContainer.getEliteMobsSpawns().keySet()) {
             Location eliteLocation = LocationProjector.project(location, schematicOffset, elitePosition).clone();
-            eliteLocation.getBlock().setType(Material.AIR);
+            // Skip if chunk not loaded to avoid sync chunk loading with FAWE
+            if (!eliteLocation.getWorld().isChunkLoaded(eliteLocation.getBlockX() >> 4, eliteLocation.getBlockZ() >> 4)) {
+                continue;
+            }
+            eliteLocation.getBlock().setBlockData(Material.AIR.createBlockData(), false);
             eliteLocation.add(new Vector(0.5, 0, 0.5));
             String bossFilename = schematicContainer.getEliteMobsSpawns().get(elitePosition);
 
@@ -408,7 +428,11 @@ public class FitAnything {
         // Spawn MythicMobs
         for (Map.Entry<Vector, String> entry : schematicContainer.getMythicMobsSpawns().entrySet()) {
             Location mobLocation = LocationProjector.project(location, schematicOffset, entry.getKey()).clone();
-            mobLocation.getBlock().setType(Material.AIR);
+            // Skip if chunk not loaded to avoid sync chunk loading with FAWE
+            if (!mobLocation.getWorld().isChunkLoaded(mobLocation.getBlockX() >> 4, mobLocation.getBlockZ() >> 4)) {
+                continue;
+            }
+            mobLocation.getBlock().setBlockData(Material.AIR.createBlockData(), false);
 
             // Use spawnAndReturn to get the entity
             Entity mythicMob = MythicMobs.spawnAndReturn(mobLocation, entry.getValue());

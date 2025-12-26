@@ -85,6 +85,8 @@ public class DefaultConfig extends ConfigurationFile {
     private static int structureClearedNotifyRadius;
     @Getter
     private static String structureClearedMessage;
+    @Getter
+    private static List<String> structureClearedCommands;
 
     public DefaultConfig() {
         super("config.yml");
@@ -225,6 +227,18 @@ public class DefaultConfig extends ConfigurationFile {
                         "Message sent to players when a structure is cleared.",
                         "Placeholders: {structure} = schematic name, {player} = player who killed the last mob"),
                 fileConfiguration, "mobTracking.clearedMessage", "&a&lCongratulations! &e{player} &ahas cleared &6{structure}&a!");
+
+        structureClearedCommands = ConfigurationEngine.setList(
+                List.of(
+                        "Commands to execute when a structure is cleared.",
+                        "Commands are executed for each player within the notify radius.",
+                        "Placeholders: {player} = player name, {killer} = killer name, {structure} = schematic name",
+                        "{world} = world name, {x} {y} {z} = structure center coords",
+                        "Example: 'execute in {world} run summon firework_rocket {x} {y} {z}' for multi-world support",
+                        "Example: 'give {player} diamond 1' will give the player a diamond",
+                        "Use /bs commandtest to test your commands"),
+                fileConfiguration, "mobTracking.clearedCommands",
+                List.of("execute in {world} run summon firework_rocket {x} {y} {z} {Life:100,LifeTime:60,FireworksItem:{id:firework_rocket,components:{fireworks:{flight_duration:10,explosions:[{shape:large_ball,colors:[I;16701501,8439583,11546150]}]}}}}"));
 
         ConfigurationEngine.fileSaverOnlyDefaults(fileConfiguration, file);
     }

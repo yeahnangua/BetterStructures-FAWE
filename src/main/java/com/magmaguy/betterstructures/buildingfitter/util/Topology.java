@@ -42,6 +42,10 @@ public class Topology {
         for (int x = 0; x < width; x += scanStep) {
             for (int z = 0; z < depth; z += scanStep) {
                 Location projectedLocation = LocationProjector.project(iteratedLocation, new Vector(x, 0, z), schematicOffset);
+                // Skip if chunk not loaded to avoid sync chunk loading with FAWE
+                if (!projectedLocation.getWorld().isChunkLoaded(projectedLocation.getBlockX() >> 4, projectedLocation.getBlockZ() >> 4)) {
+                    return 0;
+                }
                 projectedLocation = getHighestBlockAt(projectedLocation);
                 if (projectedLocation == null) {
                     return 0;
@@ -70,6 +74,11 @@ public class Topology {
     }
 
     private static Location getHighestBlockAt(Location location) {
+        // Check if chunk is loaded to avoid sync chunk loading with FAWE
+        if (!location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
+            return null;
+        }
+
         if (!location.getWorld().getEnvironment().equals(World.Environment.NETHER))
             return location.getWorld().getHighestBlockAt(location).getLocation();
         else {

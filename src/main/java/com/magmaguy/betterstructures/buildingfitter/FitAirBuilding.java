@@ -28,6 +28,8 @@ public class FitAirBuilding extends FitAnything {
     }
 
     private void scan(Chunk chunk) {
+        // Check if chunk is loaded to avoid sync chunk loading with FAWE
+        if (!chunk.isLoaded()) return;
         //The 8 offset on x and y is to center the anchor on the chunk, the system adds 100 blocks
         int altitude = 0;
         switch (chunk.getWorld().getEnvironment()) {

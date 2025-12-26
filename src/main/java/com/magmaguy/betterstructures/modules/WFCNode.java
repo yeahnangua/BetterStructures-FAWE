@@ -325,9 +325,9 @@ public class WFCNode {
 
                     // Place material only if block is on at least 2 edges (true edge/corner)
                     if (edgeCount >= 2) {
-                        blockLocation.getBlock().setType(material);
+                        blockLocation.getBlock().setBlockData(material.createBlockData(), false);
                     } else {
-                        blockLocation.getBlock().setType(Material.AIR);
+                        blockLocation.getBlock().setBlockData(Material.AIR.createBlockData(), false);
                     }
                 }
             }

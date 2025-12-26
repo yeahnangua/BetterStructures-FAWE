@@ -11,6 +11,12 @@ import java.util.List;
 
 public class SchematicPicker {
     public static SchematicContainer pick(Location naiveAnchorLocation, GeneratorConfigFields.StructureType structureType) {
+        // Check if chunk is loaded to avoid sync chunk loading with FAWE
+        if (!naiveAnchorLocation.getWorld().isChunkLoaded(
+                naiveAnchorLocation.getBlockX() >> 4,
+                naiveAnchorLocation.getBlockZ() >> 4)) {
+            return null;
+        }
         List<SchematicContainer> schematicContainers = new ArrayList<>(SchematicContainer.getSchematics().get(structureType));
         if (schematicContainers.isEmpty()) return null;
         schematicContainers.removeIf(schematicContainer ->

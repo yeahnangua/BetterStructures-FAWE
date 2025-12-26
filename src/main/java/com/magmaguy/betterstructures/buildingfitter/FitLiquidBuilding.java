@@ -27,11 +27,13 @@ public class FitLiquidBuilding extends FitAnything {
     }
 
     private void scan(Chunk chunk) {
+        // Check if chunk is loaded to avoid sync chunk loading with FAWE
+        if (!chunk.isLoaded()) return;
         //Note about the adjustments:
         //The 8 offset on x and y is to center the anchor on the chunk
         Location originalLocation = new Location(chunk.getWorld(), chunk.getX() * 16D, 0, chunk.getZ() * 16D).add(new Vector(8, 0, 8));
         //This gets the location of the highest solid block
-        originalLocation.setY(originalLocation.getWorld().getHighestBlockYAt(originalLocation));
+        originalLocation.setY(chunk.getWorld().getHighestBlockYAt(originalLocation));
 
         switch (chunk.getWorld().getEnvironment()) {
             case CUSTOM:
