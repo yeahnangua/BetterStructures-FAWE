@@ -104,13 +104,24 @@ public class FitAnything {
         }
     }
 
+    /**
+     * Skips chunk validation — used by PendingStructureManager when chunks are already confirmed ready.
+     */
+    public void pasteBypassValidation(Location location) {
+        this.skipChunkValidation = true;
+        paste(location);
+        this.skipChunkValidation = false;
+    }
+
+    private boolean skipChunkValidation = false;
+
     protected void paste(Location location) {
         BuildPlaceEvent buildPlaceEvent = new BuildPlaceEvent(this);
         Bukkit.getServer().getPluginManager().callEvent(buildPlaceEvent);
         if (buildPlaceEvent.isCancelled()) return;
 
         // Validate chunks before pasting (Terra/FAWE compatibility)
-        if (DefaultConfig.isValidateChunkBeforePaste() && schematicClipboard != null) {
+        if (!skipChunkValidation && DefaultConfig.isValidateChunkBeforePaste() && schematicClipboard != null) {
             int width = schematicClipboard.getDimensions().x();
             int depth = schematicClipboard.getDimensions().z();
             Location pasteLocation = location.clone().add(schematicOffset);

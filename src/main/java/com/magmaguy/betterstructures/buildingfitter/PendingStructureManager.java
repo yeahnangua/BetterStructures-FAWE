@@ -179,11 +179,17 @@ public class PendingStructureManager {
 
         // Process each waiting structure
         for (PendingStructure pending : waiters) {
+            // Skip already processed structures (prevents duplicate paste)
+            if (pending.processed) continue;
+
             // Mark this chunk as ready
             pending.readyChunks.add(chunkKey);
 
             // Check if all required chunks are now ready
             if (pending.readyChunks.containsAll(pending.requiredChunks)) {
+                // Mark as processed to prevent duplicate paste
+                pending.processed = true;
+
                 // Remove from queue
                 pendingQueue.remove(pending);
 
@@ -261,12 +267,12 @@ public class PendingStructureManager {
      */
     private void executePaste(FitAnything fitAnything, Location location) {
         if (Bukkit.isPrimaryThread()) {
-            fitAnything.paste(location);
+            fitAnything.pasteBypassValidation(location);
         } else {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    fitAnything.paste(location);
+                    fitAnything.pasteBypassValidation(location);
                 }
             }.runTask(MetadataHandler.PLUGIN);
         }
@@ -416,6 +422,12 @@ public class PendingStructureManager {
          * Timestamp when this structure was queued (for timeout tracking).
          */
         final long createdTimestamp;
+
+        /**
+         * Whether this structure has already been processed (pasted or cancelled).
+         * Prevents duplicate paste attempts from concurrent chunk ready notifications.
+         */
+        volatile boolean processed = false;
 
         /**
          * Creates a new PendingStructure.
