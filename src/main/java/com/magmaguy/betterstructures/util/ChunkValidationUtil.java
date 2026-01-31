@@ -109,20 +109,22 @@ public class ChunkValidationUtil {
 
     /**
      * Calculates the set of chunk coordinates required for a structure at the given location.
+     * Includes a 1-chunk padding around the structure footprint (effectively 3x3 for single-chunk structures)
+     * to ensure surrounding terrain is ready for WorldEdit pasting.
      * Each entry is a string in the format "cx,cz".
      *
      * @param location the origin location of the structure
      * @param width    the width of the structure in blocks (X axis)
      * @param depth    the depth of the structure in blocks (Z axis)
-     * @return a set of chunk coordinate strings covering the structure footprint
+     * @return a set of chunk coordinate strings covering the structure footprint plus padding
      */
     public static Set<String> getRequiredChunks(Location location, int width, int depth) {
         Set<String> chunks = new HashSet<>();
 
-        int minChunkX = location.getBlockX() >> 4;
-        int minChunkZ = location.getBlockZ() >> 4;
-        int maxChunkX = (location.getBlockX() + width) >> 4;
-        int maxChunkZ = (location.getBlockZ() + depth) >> 4;
+        int minChunkX = (location.getBlockX() >> 4) - 1;
+        int minChunkZ = (location.getBlockZ() >> 4) - 1;
+        int maxChunkX = ((location.getBlockX() + width) >> 4) + 1;
+        int maxChunkZ = ((location.getBlockZ() + depth) >> 4) + 1;
 
         for (int cx = minChunkX; cx <= maxChunkX; cx++) {
             for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {

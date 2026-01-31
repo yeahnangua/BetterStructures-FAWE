@@ -17,6 +17,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Singleton manager for handling structures waiting for chunk generation.
@@ -166,8 +167,8 @@ public class PendingStructureManager {
 
         String chunkKey = chunk.getX() + "," + chunk.getZ();
 
-        // Validate chunk is fully generated
-        if (!ChunkValidationUtil.isChunkFullyGenerated(chunk)) {
+        // Use Paper's isGenerated() for reliable generation check
+        if (!chunk.isGenerated()) {
             return;
         }
 
@@ -209,11 +210,8 @@ public class PendingStructureManager {
     }
 
     /**
-     * Requests chunk generation with a plugin chunk ticket.
-     * The ticket keeps the chunk loaded until explicitly released.
-     * <p>
-     * Uses Spigot-compatible synchronous chunk loading. The actual chunk readiness
-     * notification comes from NewChunkLoadEvent when the chunk is fully generated.
+     * Requests async chunk generation using Paper API.
+     * Uses getChunkAtAsync which properly waits for Terra/FAWE async generation.
      *
      * @param world  the world containing the chunk
      * @param chunkX the chunk X coordinate
@@ -223,27 +221,32 @@ public class PendingStructureManager {
         // Add plugin chunk ticket to keep chunk loaded
         world.addPluginChunkTicket(chunkX, chunkZ, MetadataHandler.PLUGIN);
 
-        // Load chunk synchronously (triggers generation if needed)
-        // For async generators like Terra/FAWE, the chunk may be in progress
-        if (!world.isChunkLoaded(chunkX, chunkZ)) {
-            world.loadChunk(chunkX, chunkZ);
-        }
-
-        // Schedule a delayed check in case chunk is already ready after loadChunk
-        // The NewChunkLoadEvent also triggers onChunkReady, providing redundant coverage
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (world.isChunkLoaded(chunkX, chunkZ)) {
-                    Chunk chunk = world.getChunkAt(chunkX, chunkZ);
-                    onChunkReady(chunk);
+        // Use Paper's async chunk loading - properly waits for full generation including Terra/FAWE
+        CompletableFuture<Chunk> future = world.getChunkAtAsync(chunkX, chunkZ, true);
+        future.thenAccept(chunk -> {
+            // Schedule on main thread with delay to ensure terrain population is complete
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    // Double-check chunk is fully generated using Paper API
+                    if (chunk.isGenerated()) {
+                        onChunkReady(chunk);
+                    } else {
+                        // Retry after a short delay if not yet generated
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                onChunkReady(chunk);
+                            }
+                        }.runTaskLater(MetadataHandler.PLUGIN, 10L);
+                    }
                 }
-            }
-        }.runTaskLater(MetadataHandler.PLUGIN, 5L);
+            }.runTask(MetadataHandler.PLUGIN);
+        });
     }
 
     /**
-     * Checks if a chunk is ready (loaded and fully generated).
+     * Checks if a chunk is ready (loaded and fully generated) using Paper API.
      *
      * @param world  the world containing the chunk
      * @param chunkX the chunk X coordinate
@@ -255,7 +258,8 @@ public class PendingStructureManager {
             return false;
         }
         Chunk chunk = world.getChunkAt(chunkX, chunkZ);
-        return ChunkValidationUtil.isChunkFullyGenerated(chunk);
+        // Use Paper's isGenerated() for reliable generation check
+        return chunk.isGenerated();
     }
 
     /**
