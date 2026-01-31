@@ -10,6 +10,7 @@ import com.magmaguy.betterstructures.config.DefaultConfig;
 import com.magmaguy.betterstructures.config.ValidWorldsConfig;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import com.magmaguy.betterstructures.util.ChunkValidationUtil;
+import com.magmaguy.betterstructures.buildingfitter.PendingStructureManager;
 import com.magmaguy.magmacore.util.Logger;
 import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsConfig;
 import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsConfigFields;
@@ -46,6 +47,18 @@ public class NewChunkLoadEvent implements Listener {
             }
         }.runTaskLater(MetadataHandler.PLUGIN, 20L);
         if (!ValidWorldsConfig.isValidWorld(event.getWorld())) return;
+
+        // Notify pending structure manager of chunk ready (for queued structures)
+        if (DefaultConfig.isStructureQueueEnabled()) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (event.getChunk().isLoaded()) {
+                        PendingStructureManager.getInstance().onChunkReady(event.getChunk());
+                    }
+                }
+            }.runTaskLater(MetadataHandler.PLUGIN, 5L);
+        }
 
         // Schedule delayed scanning with validation (Terra/FAWE compatibility)
         scheduleStructureScan(event.getChunk(), 0);

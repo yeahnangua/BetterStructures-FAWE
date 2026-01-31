@@ -16,6 +16,7 @@ import com.magmaguy.betterstructures.thirdparty.EliteMobs;
 import com.magmaguy.betterstructures.thirdparty.MythicMobs;
 import com.magmaguy.betterstructures.thirdparty.WorldGuard;
 import com.magmaguy.betterstructures.util.ChunkValidationUtil;
+import com.magmaguy.betterstructures.buildingfitter.PendingStructureManager;
 import com.magmaguy.betterstructures.util.SurfaceMaterials;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
 import com.magmaguy.betterstructures.worldedit.Schematic;
@@ -120,10 +121,24 @@ public class FitAnything {
                     pasteLocation.getBlockZ(),
                     pasteLocation.getBlockX() + width,
                     pasteLocation.getBlockZ() + depth)) {
-                Logger.debug("Skipping structure paste at " +
-                        location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ() +
-                        " - required chunks not fully generated");
-                return;
+
+                // Queue structure instead of skipping (Terra/FAWE async compatibility)
+                if (DefaultConfig.isStructureQueueEnabled()) {
+                    boolean queued = PendingStructureManager.getInstance()
+                            .queueStructure(this, location, width, depth);
+                    if (queued) {
+                        Logger.debug("Queued structure for deferred paste at " +
+                                location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ() +
+                                " - waiting for chunks to generate");
+                    }
+                    return;
+                } else {
+                    // Original behavior: skip when queue disabled
+                    Logger.debug("Skipping structure paste at " +
+                            location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ() +
+                            " - required chunks not fully generated (queue disabled)");
+                    return;
+                }
             }
         }
 
