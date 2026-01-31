@@ -21,6 +21,7 @@ import com.sk89q.worldedit.world.World;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -31,6 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 
@@ -217,12 +219,81 @@ public class Schematic {
      * Pastes a schematic using a distributed workload over multiple ticks.
      * If another paste operation is already in progress, this operation
      * will be queued and executed when the current operation completes.
+     * <p>
+     * Before pasting, ensures all required chunks are generated (Paper API).
+     * This provides compatibility with async world generators like Terra/FAWE.
      *
      * @param pasteBlocks List of blocks to paste
      * @param location    The location to paste at
      * @param onComplete  Optional callback to run when paste is complete
      */
     public static void pasteDistributed(List<PasteBlock> pasteBlocks, Location location, Runnable onComplete) {
+        if (pasteBlocks.isEmpty()) {
+            if (onComplete != null) onComplete.run();
+            return;
+        }
+
+        org.bukkit.World world = location.getWorld();
+        if (world == null) {
+            Logger.warn("Cannot paste: world is null");
+            return;
+        }
+
+        // Collect all unique chunks needed for this paste (with 1-chunk padding)
+        Set<Long> requiredChunks = new HashSet<>();
+        for (PasteBlock pasteBlock : pasteBlocks) {
+            int chunkX = pasteBlock.block().getX() >> 4;
+            int chunkZ = pasteBlock.block().getZ() >> 4;
+            // Add this chunk and surrounding chunks (1-block padding)
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    requiredChunks.add(chunkKey(chunkX + dx, chunkZ + dz));
+                }
+            }
+        }
+
+        // Check which chunks need generation
+        List<CompletableFuture<Chunk>> chunkFutures = new ArrayList<>();
+        for (Long key : requiredChunks) {
+            int chunkX = (int) (key >> 32);
+            int chunkZ = key.intValue();
+
+            Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+            if (!chunk.isGenerated()) {
+                // Trigger async generation using Paper API
+                chunkFutures.add(world.getChunkAtAsync(chunkX, chunkZ, true));
+            }
+        }
+
+        if (chunkFutures.isEmpty()) {
+            // All chunks already generated, proceed immediately
+            queuePasteOperation(pasteBlocks, location, onComplete);
+        } else {
+            // Wait for all chunks to generate, then paste
+            Logger.debug("Waiting for " + chunkFutures.size() + " chunks to generate before pasting at " +
+                    location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ());
+
+            CompletableFuture.allOf(chunkFutures.toArray(new CompletableFuture[0]))
+                    .thenRun(() -> {
+                        // Schedule on main thread after all chunks generated
+                        Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
+                            queuePasteOperation(pasteBlocks, location, onComplete);
+                        });
+                    });
+        }
+    }
+
+    /**
+     * Creates a unique key for chunk coordinates.
+     */
+    private static long chunkKey(int x, int z) {
+        return ((long) x << 32) | (z & 0xFFFFFFFFL);
+    }
+
+    /**
+     * Queues the paste operation for distributed processing.
+     */
+    private static void queuePasteOperation(List<PasteBlock> pasteBlocks, Location location, Runnable onComplete) {
         // Add this paste operation to the queue
         pasteQueue.add(new PasteBlockOperation(pasteBlocks, location, onComplete));
 
