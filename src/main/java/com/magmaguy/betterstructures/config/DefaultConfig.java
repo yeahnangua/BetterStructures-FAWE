@@ -88,6 +88,16 @@ public class DefaultConfig extends ConfigurationFile {
     @Getter
     private static List<String> structureClearedCommands;
 
+    // Terra/FAWE compatibility settings
+    @Getter
+    private static int structureScanDelayTicks;
+    @Getter
+    private static int structureScanMaxRetries;
+    @Getter
+    private static boolean terraCompatibilityMode;
+    @Getter
+    private static boolean validateChunkBeforePaste;
+
     public DefaultConfig() {
         super("config.yml");
         instance = this;
@@ -239,6 +249,36 @@ public class DefaultConfig extends ConfigurationFile {
                         "Use /bs commandtest to test your commands"),
                 fileConfiguration, "mobTracking.clearedCommands",
                 List.of("execute in {world} run summon firework_rocket {x} {y} {z} {Life:100,LifeTime:60,FireworksItem:{id:firework_rocket,components:{fireworks:{flight_duration:10,explosions:[{shape:large_ball,colors:[I;16701501,8439583,11546150]}]}}}}"));
+
+        // Terra/FAWE compatibility settings
+        structureScanDelayTicks = ConfigurationEngine.setInt(
+                List.of(
+                        "Delay in ticks before scanning a new chunk for structure placement.",
+                        "Increase this value if using Terra or other custom world generators with FAWE.",
+                        "Default: 2 (minimal delay). Recommended for Terra + FAWE: 40-60 ticks.",
+                        "20 ticks = 1 second."),
+                fileConfiguration, "terraCompatibility.structureScanDelayTicks", 2);
+
+        structureScanMaxRetries = ConfigurationEngine.setInt(
+                List.of(
+                        "Maximum number of retry attempts if a chunk is not fully generated.",
+                        "Each retry waits structureScanDelayTicks before trying again.",
+                        "Set to 0 to disable retries."),
+                fileConfiguration, "terraCompatibility.structureScanMaxRetries", 3);
+
+        terraCompatibilityMode = ConfigurationEngine.setBoolean(
+                List.of(
+                        "Enable enhanced compatibility mode for Terra and other async world generators.",
+                        "When enabled, uses longer delays and additional chunk validation.",
+                        "Set to true if using Terra, Iris, or similar custom world generators with FAWE."),
+                fileConfiguration, "terraCompatibility.enabled", false);
+
+        validateChunkBeforePaste = ConfigurationEngine.setBoolean(
+                List.of(
+                        "Validate that all chunks required for a structure are fully generated before pasting.",
+                        "Prevents structures from being placed on incomplete terrain.",
+                        "Disable only if experiencing performance issues."),
+                fileConfiguration, "terraCompatibility.validateChunkBeforePaste", true);
 
         ConfigurationEngine.fileSaverOnlyDefaults(fileConfiguration, file);
     }

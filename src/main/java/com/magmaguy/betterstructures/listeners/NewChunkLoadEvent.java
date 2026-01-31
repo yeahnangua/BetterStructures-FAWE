@@ -9,6 +9,8 @@ import com.magmaguy.betterstructures.buildingfitter.util.FitUndergroundDeepBuild
 import com.magmaguy.betterstructures.config.DefaultConfig;
 import com.magmaguy.betterstructures.config.ValidWorldsConfig;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
+import com.magmaguy.betterstructures.util.ChunkValidationUtil;
+import com.magmaguy.magmacore.util.Logger;
 import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsConfig;
 import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsConfigFields;
 import com.magmaguy.betterstructures.modules.WFCGenerator;
@@ -21,14 +23,15 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class NewChunkLoadEvent implements Listener {
 
-    private static HashSet<Chunk> loadingChunks = new HashSet<>();
+    private static final Set<Chunk> loadingChunks = ConcurrentHashMap.newKeySet();
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChunkLoad(ChunkLoadEvent event) {
@@ -44,12 +47,63 @@ public class NewChunkLoadEvent implements Listener {
         }.runTaskLater(MetadataHandler.PLUGIN, 20L);
         if (!ValidWorldsConfig.isValidWorld(event.getWorld())) return;
 
-        surfaceScanner(event.getChunk());
-        shallowUndergroundScanner(event.getChunk());
-        deepUndergroundScanner(event.getChunk());
-        skyScanner(event.getChunk());
-        liquidSurfaceScanner(event.getChunk());
-        dungeonScanner(event.getChunk());
+        // Schedule delayed scanning with validation (Terra/FAWE compatibility)
+        scheduleStructureScan(event.getChunk(), 0);
+    }
+
+    /**
+     * Schedules structure scanning with delay and retry logic.
+     * This provides compatibility with Terra and other async world generators.
+     *
+     * @param chunk The chunk to scan
+     * @param attemptNumber Current attempt number (0-based)
+     */
+    private void scheduleStructureScan(Chunk chunk, int attemptNumber) {
+        int maxAttempts = DefaultConfig.getStructureScanMaxRetries();
+        int delayTicks = DefaultConfig.getStructureScanDelayTicks();
+
+        // Apply longer delay if Terra compatibility mode is enabled
+        if (DefaultConfig.isTerraCompatibilityMode() && delayTicks < 40) {
+            delayTicks = 40;
+        }
+
+        final int finalDelayTicks = delayTicks;
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                // Validate chunk is still loaded
+                if (!chunk.isLoaded()) {
+                    return;
+                }
+
+                // Validate chunk is fully generated (Terra compatibility)
+                if (!ChunkValidationUtil.isChunkFullyGenerated(chunk)) {
+                    if (attemptNumber < maxAttempts) {
+                        // Retry with same delay
+                        scheduleStructureScan(chunk, attemptNumber + 1);
+                        return;
+                    }
+                    // Max retries reached, proceed anyway to avoid stuck structures
+                }
+
+                runScanners(chunk);
+            }
+        }.runTaskLater(MetadataHandler.PLUGIN, finalDelayTicks);
+    }
+
+    /**
+     * Runs all structure scanners on a chunk.
+     *
+     * @param chunk The chunk to scan for structure placement
+     */
+    private void runScanners(Chunk chunk) {
+        surfaceScanner(chunk);
+        shallowUndergroundScanner(chunk);
+        deepUndergroundScanner(chunk);
+        skyScanner(chunk);
+        liquidSurfaceScanner(chunk);
+        dungeonScanner(chunk);
     }
 
     /**

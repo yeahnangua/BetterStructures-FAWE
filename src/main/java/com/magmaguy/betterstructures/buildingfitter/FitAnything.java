@@ -15,6 +15,7 @@ import com.magmaguy.betterstructures.structurelocation.StructureLocationManager;
 import com.magmaguy.betterstructures.thirdparty.EliteMobs;
 import com.magmaguy.betterstructures.thirdparty.MythicMobs;
 import com.magmaguy.betterstructures.thirdparty.WorldGuard;
+import com.magmaguy.betterstructures.util.ChunkValidationUtil;
 import com.magmaguy.betterstructures.util.SurfaceMaterials;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
 import com.magmaguy.betterstructures.worldedit.Schematic;
@@ -106,6 +107,25 @@ public class FitAnything {
         BuildPlaceEvent buildPlaceEvent = new BuildPlaceEvent(this);
         Bukkit.getServer().getPluginManager().callEvent(buildPlaceEvent);
         if (buildPlaceEvent.isCancelled()) return;
+
+        // Validate chunks before pasting (Terra/FAWE compatibility)
+        if (DefaultConfig.isValidateChunkBeforePaste() && schematicClipboard != null) {
+            int width = schematicClipboard.getDimensions().x();
+            int depth = schematicClipboard.getDimensions().z();
+            Location pasteLocation = location.clone().add(schematicOffset);
+
+            if (!ChunkValidationUtil.areChunksReadyForStructure(
+                    location.getWorld(),
+                    pasteLocation.getBlockX(),
+                    pasteLocation.getBlockZ(),
+                    pasteLocation.getBlockX() + width,
+                    pasteLocation.getBlockZ() + depth)) {
+                Logger.debug("Skipping structure paste at " +
+                        location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ() +
+                        " - required chunks not fully generated");
+                return;
+            }
+        }
 
         FitAnything fitAnything = this;
 
