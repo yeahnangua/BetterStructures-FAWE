@@ -16,7 +16,6 @@ import com.magmaguy.betterstructures.listeners.FirstTimeSetupWarner;
 import com.magmaguy.betterstructures.listeners.MobDeathListener;
 import com.magmaguy.betterstructures.listeners.NewChunkLoadEvent;
 import com.magmaguy.betterstructures.mobtracking.MobTrackingManager;
-import com.magmaguy.betterstructures.buildingfitter.PendingStructureManager;
 import com.magmaguy.betterstructures.modules.ModulesContainer;
 import com.magmaguy.betterstructures.modules.WFCGenerator;
 import com.magmaguy.betterstructures.schematics.SchematicContainer;
@@ -99,11 +98,6 @@ public final class BetterStructures extends JavaPlugin {
                 Bukkit.getPluginManager().getPlugin("EliteMobs") != null)
             Bukkit.getPluginManager().registerEvents(new WorldGuard(), this);
         new Metrics(this, 19523);
-
-        // Initialize structure queue system for Terra/FAWE compatibility
-        if (DefaultConfig.isStructureQueueEnabled()) {
-            PendingStructureManager.getInstance();
-        }
     }
 
     @Override
@@ -122,8 +116,6 @@ public final class BetterStructures extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Shutdown pending structure manager
-        PendingStructureManager.shutdown();
         // Plugin shutdown logic
         MobTrackingManager.shutdown();
         StructureLocationManager.getInstance().shutdown();

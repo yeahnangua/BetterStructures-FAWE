@@ -1,0 +1,41 @@
+# BetterStructures - Generated Structure Locations
+# This file is automatically maintained by the plugin.
+# Each entry contains the coordinates, schematic name, and structure type.
+
+structures:
+  -2008_-32_-328:
+    x: -2008
+    y: -32
+    z: -328
+    schematic: bs_lostcivilizations_premium_forge_deep.yml
+    type: UNDERGROUND_DEEP
+  -1688_-4_-72:
+    x: -1688
+    y: -4
+    z: -72
+    schematic: bs_lostcivilizations_premium_driller_deep.yml
+    type: UNDERGROUND_DEEP
+  -1864_15_-264:
+    x: -1864
+    y: 15
+    z: -264
+    schematic: betterstructures_echoes_undergroundmines2_shallow.yml
+    type: UNDERGROUND_SHALLOW
+  -2024_-25_8:
+    x: -2024
+    y: -25
+    z: 8
+    schematic: betterstructures_adventure_largecave_deep.yml
+    type: UNDERGROUND_DEEP
+  '-1672_47_40':
+    x: -1672
+    y: 47
+    z: 40
+    schematic: betterstructures_exploration_bridgecave_shallow.yml
+    type: UNDERGROUND_SHALLOW
+  '-1928_67_8':
+    x: -1928
+    y: 67
+    z: 8
+    schematic: dummy_test3.yml
+    type: SURFACE

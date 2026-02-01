@@ -98,14 +98,6 @@ public class DefaultConfig extends ConfigurationFile {
     @Getter
     private static boolean validateChunkBeforePaste;
 
-    // Structure queue settings
-    @Getter
-    private static boolean structureQueueEnabled;
-    @Getter
-    private static int structureQueueMaxSize;
-    @Getter
-    private static int structureQueueTimeoutSeconds;
-
     public DefaultConfig() {
         super("config.yml");
         instance = this;
@@ -287,29 +279,6 @@ public class DefaultConfig extends ConfigurationFile {
                         "Prevents structures from being placed on incomplete terrain.",
                         "Disable only if experiencing performance issues."),
                 fileConfiguration, "terraCompatibility.validateChunkBeforePaste", true);
-
-        // Structure queue settings
-        structureQueueEnabled = ConfigurationEngine.setBoolean(
-                List.of(
-                        "Enable structure wait queue for Terra/FAWE compatibility.",
-                        "When enabled, structures that cannot be placed due to ungenerated chunks",
-                        "will be queued and placed once the chunks are ready.",
-                        "When disabled, structures are skipped (original behavior)."),
-                fileConfiguration, "terraCompatibility.structureQueueEnabled", true);
-
-        structureQueueMaxSize = ConfigurationEngine.setInt(
-                List.of(
-                        "Maximum number of structures that can wait in the queue.",
-                        "Prevents memory issues during rapid world generation.",
-                        "Structures beyond this limit will be discarded."),
-                fileConfiguration, "terraCompatibility.structureQueueMaxSize", 100);
-
-        structureQueueTimeoutSeconds = ConfigurationEngine.setInt(
-                List.of(
-                        "Maximum time in seconds a structure can wait in the queue.",
-                        "Structures that exceed this timeout will be discarded with a warning.",
-                        "Increase if using slow storage or heavy world generation."),
-                fileConfiguration, "terraCompatibility.structureQueueTimeoutSeconds", 60);
 
         ConfigurationEngine.fileSaverOnlyDefaults(fileConfiguration, file);
     }

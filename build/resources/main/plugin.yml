@@ -1,0 +1,38 @@
+name: BetterStructures
+version: '2.1.2'
+main: com.magmaguy.betterstructures.BetterStructures
+api-version: 1.14
+depend: [ WorldEdit ]
+softdepend:
+  - EliteMobs
+  - WorldGuard
+  - WorldEdit
+  - ItemsAdder
+  - Terralith
+  - Iris
+  - Terra
+  - TerraformGenerator
+authors: [ MagmaGuy ]
+description: A plugin that adds random structures to your Minecraft world!
+website: magmaguy.com
+commands:
+  betterstructures:
+    description: Main command
+    aliases:
+      - bs
+permissions:
+  betterstructures.setup:
+    description: Gives admins access to the /betterstructures setup command
+    default: op
+  betterstructures.initialize:
+    description: Gives admins access to the /betterstructures initialize command
+    default: op
+  betterstructures.generatemodules.slowly:
+    description: Gives admins access to the /betterstructures generateModulesSlowly command
+    default: op
+  betterstructures.generatemodules.instantly:
+    description: Gives admins access to the /betterstructures generateModulesInstantly command
+    default: op
+  betterstructures.generatemodules:
+    description: Gives admins access to the /betterstructures generateModules command
+    default: op

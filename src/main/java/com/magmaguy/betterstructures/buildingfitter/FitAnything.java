@@ -15,8 +15,6 @@ import com.magmaguy.betterstructures.structurelocation.StructureLocationManager;
 import com.magmaguy.betterstructures.thirdparty.EliteMobs;
 import com.magmaguy.betterstructures.thirdparty.MythicMobs;
 import com.magmaguy.betterstructures.thirdparty.WorldGuard;
-import com.magmaguy.betterstructures.util.ChunkValidationUtil;
-import com.magmaguy.betterstructures.buildingfitter.PendingStructureManager;
 import com.magmaguy.betterstructures.util.SurfaceMaterials;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
 import com.magmaguy.betterstructures.worldedit.Schematic;
@@ -104,54 +102,13 @@ public class FitAnything {
         }
     }
 
-    /**
-     * Skips chunk validation — used by PendingStructureManager when chunks are already confirmed ready.
-     */
-    public void pasteBypassValidation(Location location) {
-        this.skipChunkValidation = true;
-        paste(location);
-        this.skipChunkValidation = false;
-    }
-
-    private boolean skipChunkValidation = false;
-
     protected void paste(Location location) {
         BuildPlaceEvent buildPlaceEvent = new BuildPlaceEvent(this);
         Bukkit.getServer().getPluginManager().callEvent(buildPlaceEvent);
         if (buildPlaceEvent.isCancelled()) return;
 
-        // Validate chunks before pasting (Terra/FAWE compatibility)
-        if (!skipChunkValidation && DefaultConfig.isValidateChunkBeforePaste() && schematicClipboard != null) {
-            int width = schematicClipboard.getDimensions().x();
-            int depth = schematicClipboard.getDimensions().z();
-            Location pasteLocation = location.clone().add(schematicOffset);
-
-            if (!ChunkValidationUtil.areChunksReadyForStructure(
-                    location.getWorld(),
-                    pasteLocation.getBlockX(),
-                    pasteLocation.getBlockZ(),
-                    pasteLocation.getBlockX() + width,
-                    pasteLocation.getBlockZ() + depth)) {
-
-                // Queue structure instead of skipping (Terra/FAWE async compatibility)
-                if (DefaultConfig.isStructureQueueEnabled()) {
-                    boolean queued = PendingStructureManager.getInstance()
-                            .queueStructure(this, location, width, depth);
-                    if (queued) {
-                        Logger.debug("Queued structure for deferred paste at " +
-                                location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ() +
-                                " - waiting for chunks to generate");
-                    }
-                    return;
-                } else {
-                    // Original behavior: skip when queue disabled
-                    Logger.debug("Skipping structure paste at " +
-                            location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ() +
-                            " - required chunks not fully generated (queue disabled)");
-                    return;
-                }
-            }
-        }
+        // Chunk generation is now handled at Schematic.pasteDistributed() level
+        // which ensures all required chunks are generated before any blocks are placed
 
         FitAnything fitAnything = this;
 
