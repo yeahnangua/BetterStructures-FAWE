@@ -1,0 +1,36 @@
+# Build outputs
+build/
+out/
+target/
+*.jar
+*.class
+
+# Gradle
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Plugin test environment
+testbed/
+
+# Claude/OMC state
+.omc/
+CLAUDE.md
+
+# Temporary files
+*.log
+*.tmp

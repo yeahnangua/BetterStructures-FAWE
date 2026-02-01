@@ -1,7 +1,0 @@
-{
-  "active": true,
-  "started_at": "2026-02-01T03:29:04.687Z",
-  "original_prompt": "AUTOPILOT 我希望仅保留schematic的检查，我觉得这才是理论上最完美的检查（应该是吧），无论原理图有多大，就算是5*5区块的建筑也能正常放置。应该是这样吧",
-  "reinforcement_count": 0,
-  "last_checked_at": "2026-02-01T03:29:04.688Z"
-}
