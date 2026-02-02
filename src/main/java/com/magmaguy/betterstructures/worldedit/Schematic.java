@@ -96,6 +96,34 @@ public class Schematic {
     }
 
     /**
+     * Calculates all chunks required for pasting a schematic.
+     * This method does NOT access the world - it only uses clipboard dimensions.
+     *
+     * @param clipboard The schematic clipboard
+     * @param location The paste location
+     * @param schematicOffset The schematic offset
+     * @return Set of chunk keys (use chunkKey() to decode)
+     */
+    private static Set<Long> calculateRequiredChunks(Clipboard clipboard, Location location, Vector schematicOffset) {
+        Set<Long> chunks = new HashSet<>();
+        Location adjusted = location.clone().add(schematicOffset);
+
+        // Calculate bounding box from clipboard dimensions (no world access)
+        int minX = adjusted.getBlockX();
+        int maxX = minX + clipboard.getDimensions().x();
+        int minZ = adjusted.getBlockZ();
+        int maxZ = minZ + clipboard.getDimensions().z();
+
+        // Convert to chunk coordinates with 1-chunk padding
+        for (int cx = (minX >> 4) - 1; cx <= (maxX >> 4) + 1; cx++) {
+            for (int cz = (minZ >> 4) - 1; cz <= (maxZ >> 4) + 1; cz++) {
+                chunks.add(chunkKey(cx, cz));
+            }
+        }
+        return chunks;
+    }
+
+    /**
      * Creates a list of paste blocks from a schematic
      *
      * @param schematicClipboard The clipboard containing the schematic
@@ -191,11 +219,13 @@ public class Schematic {
     }
 
     /**
-     * Pastes a schematic using the provided pedestal material provider
+     * Pastes a schematic using the provided pedestal material provider.
+     * Ensures all required chunks are generated BEFORE accessing any world blocks.
      *
      * @param schematicClipboard The clipboard containing the schematic
      * @param location The location to paste at
      * @param schematicOffset The offset of the schematic
+     * @param prePasteCallback Callback to run AFTER chunks are ready but BEFORE paste (for pedestal assignment)
      * @param pedestalMaterialProvider Function that provides pedestal material based on whether it's a surface block
      * @param onComplete Callback to run when paste is complete
      */
@@ -203,28 +233,61 @@ public class Schematic {
             Clipboard schematicClipboard,
             Location location,
             Vector schematicOffset,
+            Runnable prePasteCallback,
             Function<Boolean, Material> pedestalMaterialProvider,
             Runnable onComplete) {
 
-        List<PasteBlock> pasteBlocks = createPasteBlocks(
-                schematicClipboard,
-                location,
-                schematicOffset,
-                pedestalMaterialProvider);
+        org.bukkit.World world = location.getWorld();
+        if (world == null) {
+            Logger.warn("Cannot paste: world is null");
+            return;
+        }
 
-        pasteDistributed(pasteBlocks, location, onComplete);
+        // Step 1: Calculate required chunks WITHOUT accessing world
+        Set<Long> requiredChunks = calculateRequiredChunks(schematicClipboard, location, schematicOffset);
+
+        // Step 2: Check which chunks need generation
+        List<CompletableFuture<Chunk>> chunkFutures = new ArrayList<>();
+        for (Long key : requiredChunks) {
+            int chunkX = (int) (key >> 32);
+            int chunkZ = key.intValue();
+
+            Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+            if (!chunk.isGenerated()) {
+                chunkFutures.add(world.getChunkAtAsync(chunkX, chunkZ, true));
+            }
+        }
+
+        if (chunkFutures.isEmpty()) {
+            // All chunks already generated, proceed immediately
+            if (prePasteCallback != null) prePasteCallback.run();
+            List<PasteBlock> pasteBlocks = createPasteBlocks(
+                    schematicClipboard, location, schematicOffset, pedestalMaterialProvider);
+            queuePasteOperation(pasteBlocks, location, onComplete);
+        } else {
+            // Wait for all chunks to generate
+            Logger.debug("Waiting for " + chunkFutures.size() + " chunks to generate before pasting at " +
+                    location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ());
+
+            CompletableFuture.allOf(chunkFutures.toArray(new CompletableFuture[0]))
+                    .thenRun(() -> {
+                        // Schedule on main thread after all chunks generated
+                        Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
+                            if (prePasteCallback != null) prePasteCallback.run();
+                            List<PasteBlock> pasteBlocks = createPasteBlocks(
+                                    schematicClipboard, location, schematicOffset, pedestalMaterialProvider);
+                            queuePasteOperation(pasteBlocks, location, onComplete);
+                        });
+                    });
+        }
     }
 
     /**
-     * Pastes a schematic using a distributed workload over multiple ticks.
-     * If another paste operation is already in progress, this operation
-     * will be queued and executed when the current operation completes.
-     * <p>
-     * Before pasting, ensures all required chunks are generated (Paper API).
-     * This provides compatibility with async world generators like Terra/FAWE.
+     * Pastes blocks using a distributed workload over multiple ticks.
+     * IMPORTANT: Caller must ensure all chunks are generated before calling this method.
      *
      * @param pasteBlocks List of blocks to paste
-     * @param location    The location to paste at
+     * @param location    The location reference
      * @param onComplete  Optional callback to run when paste is complete
      */
     public static void pasteDistributed(List<PasteBlock> pasteBlocks, Location location, Runnable onComplete) {
@@ -233,54 +296,8 @@ public class Schematic {
             return;
         }
 
-        org.bukkit.World world = location.getWorld();
-        if (world == null) {
-            Logger.warn("Cannot paste: world is null");
-            return;
-        }
-
-        // Collect all unique chunks needed for this paste (with 1-chunk padding)
-        Set<Long> requiredChunks = new HashSet<>();
-        for (PasteBlock pasteBlock : pasteBlocks) {
-            int chunkX = pasteBlock.block().getX() >> 4;
-            int chunkZ = pasteBlock.block().getZ() >> 4;
-            // Add this chunk and surrounding chunks (1-block padding)
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dz = -1; dz <= 1; dz++) {
-                    requiredChunks.add(chunkKey(chunkX + dx, chunkZ + dz));
-                }
-            }
-        }
-
-        // Check which chunks need generation
-        List<CompletableFuture<Chunk>> chunkFutures = new ArrayList<>();
-        for (Long key : requiredChunks) {
-            int chunkX = (int) (key >> 32);
-            int chunkZ = key.intValue();
-
-            Chunk chunk = world.getChunkAt(chunkX, chunkZ);
-            if (!chunk.isGenerated()) {
-                // Trigger async generation using Paper API
-                chunkFutures.add(world.getChunkAtAsync(chunkX, chunkZ, true));
-            }
-        }
-
-        if (chunkFutures.isEmpty()) {
-            // All chunks already generated, proceed immediately
-            queuePasteOperation(pasteBlocks, location, onComplete);
-        } else {
-            // Wait for all chunks to generate, then paste
-            Logger.debug("Waiting for " + chunkFutures.size() + " chunks to generate before pasting at " +
-                    location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ());
-
-            CompletableFuture.allOf(chunkFutures.toArray(new CompletableFuture[0]))
-                    .thenRun(() -> {
-                        // Schedule on main thread after all chunks generated
-                        Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
-                            queuePasteOperation(pasteBlocks, location, onComplete);
-                        });
-                    });
-        }
+        // Chunks are already verified by pasteSchematic(), proceed directly to queue
+        queuePasteOperation(pasteBlocks, location, onComplete);
     }
 
     /**

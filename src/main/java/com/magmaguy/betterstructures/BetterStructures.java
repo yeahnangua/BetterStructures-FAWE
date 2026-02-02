@@ -60,6 +60,7 @@ public final class BetterStructures extends JavaPlugin {
 
         NMSManager.initializeAdapter(this);
 
+        long configStartTime = System.currentTimeMillis();
         new TreasureConfig();
         new GeneratorConfig();
         new ModuleGeneratorsConfig();
@@ -68,12 +69,18 @@ public final class BetterStructures extends JavaPlugin {
         new ModulesConfig();
         new ContentPackageConfig();
         ComponentsConfigFolder.initialize();
+        Logger.info("Config initialization completed in " + (System.currentTimeMillis() - configStartTime) + "ms");
+
+        long slmStartTime = System.currentTimeMillis();
         StructureLocationManager.getInstance();
+        Logger.info("StructureLocationManager initialized in " + (System.currentTimeMillis() - slmStartTime) + "ms");
 
         // Initialize mob tracking system
         if (DefaultConfig.isMobTrackingEnabled()) {
+            long mtmStartTime = System.currentTimeMillis();
             MobTrackingManager.getInstance();
             Bukkit.getPluginManager().registerEvents(new MobDeathListener(), this);
+            Logger.info("MobTrackingManager initialized in " + (System.currentTimeMillis() - mtmStartTime) + "ms");
             Logger.info("Mob tracking system enabled.");
         }
 

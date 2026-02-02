@@ -4,11 +4,16 @@ import com.magmaguy.betterstructures.MetadataHandler;
 import com.magmaguy.betterstructures.modules.ModulesContainer;
 import com.magmaguy.betterstructures.worldedit.Schematic;
 import com.magmaguy.magmacore.config.CustomConfig;
+import com.magmaguy.magmacore.util.Logger;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import lombok.Getter;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ModulesConfig extends CustomConfig {
     @Getter
@@ -23,10 +28,28 @@ public class ModulesConfig extends CustomConfig {
         File modulesFile = new File(MetadataHandler.PLUGIN.getDataFolder().getAbsolutePath()+ File.separatorChar + "modules");
         if (!modulesFile.exists()) modulesFile.mkdir();
 
-        HashMap<File, Clipboard> clipboards = new HashMap();
-        //Initialize schematics
-        for (File file : new File(MetadataHandler.PLUGIN.getDataFolder().getAbsolutePath() + File.separatorChar + "modules").listFiles())
-            scanDirectoryForSchematics(file, clipboards);
+        // Step 1: Collect all .schem files (fast, synchronous)
+        List<File> moduleFiles = new ArrayList<>();
+        File modulesDir = new File(MetadataHandler.PLUGIN.getDataFolder().getAbsolutePath() + File.separatorChar + "modules");
+        if (modulesDir.exists() && modulesDir.listFiles() != null) {
+            for (File file : modulesDir.listFiles()) {
+                collectSchematicFiles(file, moduleFiles);
+            }
+        }
+
+        // Step 2: Parallel loading
+        Logger.info("Loading " + moduleFiles.size() + " modules...");
+        long startTime = System.currentTimeMillis();
+
+        Map<File, Clipboard> clipboards = new ConcurrentHashMap<>();
+        moduleFiles.parallelStream().forEach(file -> {
+            Clipboard clipboard = Schematic.load(file);
+            if (clipboard != null) {
+                clipboards.put(file, clipboard);
+            }
+        });
+
+        Logger.info("Loaded " + clipboards.size() + " modules in " + (System.currentTimeMillis() - startTime) + "ms");
 
         for (String key : super.getCustomConfigFieldsHashMap().keySet())
             moduleConfigurations.put(key, (ModulesConfigFields) super.getCustomConfigFieldsHashMap().get(key));
@@ -62,15 +85,14 @@ public class ModulesConfig extends CustomConfig {
 
     }
 
-    private static void scanDirectoryForSchematics(File file, HashMap<File, Clipboard> clipboards) {
+    private static void collectSchematicFiles(File file, List<File> schematicFiles) {
         if (file.getName().endsWith(".schem")) {
-            Clipboard clipboard = Schematic.load(file);
-            if (clipboard == null) return;
-            clipboards.put(file, clipboard);
+            schematicFiles.add(file);
+        } else if (file.isDirectory() && file.listFiles() != null) {
+            for (File iteratedFile : file.listFiles()) {
+                collectSchematicFiles(iteratedFile, schematicFiles);
+            }
         }
-        else if (file.isDirectory())
-            for (File iteratedFile : file.listFiles())
-                scanDirectoryForSchematics(iteratedFile, clipboards);
     }
 
     public static String convertFromSchematicFilename(String schematicFilename) {

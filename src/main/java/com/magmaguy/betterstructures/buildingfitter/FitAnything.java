@@ -107,33 +107,35 @@ public class FitAnything {
         Bukkit.getServer().getPluginManager().callEvent(buildPlaceEvent);
         if (buildPlaceEvent.isCancelled()) return;
 
-        // Chunk generation is now handled at Schematic.pasteDistributed() level
-        // which ensures all required chunks are generated before any blocks are placed
-
         FitAnything fitAnything = this;
 
-        // Set pedestal material before the paste so bedrock blocks get replaced correctly
-        assignPedestalMaterial(location);
-        if (pedestalMaterial == null)
-            switch (location.getWorld().getEnvironment()) {
-                case NETHER:
-                    pedestalMaterial = Material.NETHERRACK;
-                    break;
-                case THE_END:
-                    pedestalMaterial = Material.END_STONE;
-                    break;
-                default:
-                    pedestalMaterial = Material.STONE;
-            }
+        // Create prePasteCallback that runs AFTER chunks are ready but BEFORE paste
+        // This ensures assignPedestalMaterial can safely access world blocks
+        Runnable prePasteCallback = () -> {
+            // Set pedestal material - now safe because chunks are generated
+            assignPedestalMaterial(location);
+            if (pedestalMaterial == null)
+                switch (location.getWorld().getEnvironment()) {
+                    case NETHER:
+                        pedestalMaterial = Material.NETHERRACK;
+                        break;
+                    case THE_END:
+                        pedestalMaterial = Material.END_STONE;
+                        break;
+                    default:
+                        pedestalMaterial = Material.STONE;
+                }
+        };
 
         // Create a function to provide pedestal material
         Function<Boolean, Material> pedestalMaterialProvider = this::getPedestalMaterial;
 
-        // Paste the schematic with the moved logic
+        // Paste the schematic with chunk-safe callback
         Schematic.pasteSchematic(
                 schematicClipboard,
                 location,
                 schematicOffset,
+                prePasteCallback,
                 pedestalMaterialProvider,
                 onPasteComplete(fitAnything, location)
         );
