@@ -39,20 +39,20 @@ public class PlaceCommand extends AdvancedCommand {
                     break;
                 }
             if (commandSchematicContainer == null) {
-                player.sendMessage("[BetterStructures] Invalid schematic!");
+                player.sendMessage("[BetterStructures] 无效的建筑模板！");
                 return;
             }
             GeneratorConfigFields.StructureType structureType;
             try {
                 structureType = GeneratorConfigFields.StructureType.valueOf(schematicType);
             } catch (Exception exception) {
-                player.sendMessage("[BetterStructures] Failed to get valid schematic type!");
+                player.sendMessage("[BetterStructures] 无法获取有效的建筑类型！");
                 return;
             }
             FitAnything.commandBasedCreation(player.getLocation().getChunk(), structureType, commandSchematicContainer);
-            player.sendMessage("[BetterStructures] Attempted to place " + schematicFile + " !");
+            player.sendMessage("[BetterStructures] 正在尝试放置 " + schematicFile + " ！");
         } catch (Exception ex) {
-            player.sendMessage("[BetterStructures] Invalid schematic!");
+            player.sendMessage("[BetterStructures] 无效的建筑模板！");
         }
     }
 }

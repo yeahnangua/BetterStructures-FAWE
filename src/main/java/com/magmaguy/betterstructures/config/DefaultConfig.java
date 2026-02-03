@@ -133,7 +133,7 @@ public class DefaultConfig extends ConfigurationFile {
         endAirBuildMinAltitude = ConfigurationEngine.setInt(fileConfiguration, "endAirBuildMinAltitude", 80);
         endAirBuildMaxAltitude = ConfigurationEngine.setInt(fileConfiguration, "endAirBuildMaxAltitude", 120);
         newBuildingWarn = ConfigurationEngine.setBoolean(fileConfiguration, "warnAdminsAboutNewBuildings", true);
-        regionProtectedMessage = ConfigurationEngine.setString(fileConfiguration, "regionProtectedMessage", "&8[BetterStructures] &cDefeat the zone's bosses to edit blocks!");
+        regionProtectedMessage = ConfigurationEngine.setString(fileConfiguration, "regionProtectedMessage", "&8[BetterStructures] &c击败该区域的Boss才能编辑方块！");
         protectEliteMobsRegions = ConfigurationEngine.setBoolean(fileConfiguration, "protectEliteMobsRegions", true);
         setupDone = ConfigurationEngine.setBoolean(fileConfiguration, "setupDone", false);
         modularChunkPastingSpeed = ConfigurationEngine.setInt(fileConfiguration, "modularChunkPastingSpeed", 10);
@@ -236,7 +236,7 @@ public class DefaultConfig extends ConfigurationFile {
                 List.of(
                         "Message sent to players when a structure is cleared.",
                         "Placeholders: {structure} = schematic name, {player} = player who killed the last mob"),
-                fileConfiguration, "mobTracking.clearedMessage", "&a&lCongratulations! &e{player} &ahas cleared &6{structure}&a!");
+                fileConfiguration, "mobTracking.clearedMessage", "&a&l恭喜！&e{player} &a已清除 &6{structure}&a！");
 
         structureClearedCommands = ConfigurationEngine.setList(
                 List.of(

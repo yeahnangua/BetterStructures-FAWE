@@ -16,7 +16,7 @@ public class BetterStructuresFirstTimeSetupMenu {
         new com.magmaguy.magmacore.menus.FirstTimeSetupMenu(
                 player,
                 "&2BetterStructures",
-                "&6Add custom structures to your server!",
+                "&6为你的服务器添加自定义建筑！",
                 createInfoItem(),
                 List.of(createGettingStartedItem()));
     }
@@ -24,17 +24,17 @@ public class BetterStructuresFirstTimeSetupMenu {
     private static MenuButton createInfoItem() {
         return new MenuButton(ItemStackGenerator.generateSkullItemStack(
                 "magmaguy",
-                "&2Welcome to BetterStructures!",
+                "&2欢迎使用 BetterStructures！",
                 List.of(
-                        "&9Click to get a link to the full setup guide!",
-                        "&2You can find a basic checklist below to get started!"))) {
+                        "&9点击获取完整安装指南链接！",
+                        "&2你可以在下方找到基本的入门清单！"))) {
             @Override
             public void onClick(Player player) {
                 player.closeInventory();
                 Logger.sendSimpleMessage(player, "&8&m-----------------------------------------------------");
-                Logger.sendSimpleMessage(player, "&2See the full setup here: &9&nhttps://nightbreak.io/plugin/betterstructures/#setup");
-                Logger.sendSimpleMessage(player, "&2Check the available content through &6/bs setup &2!");
-                Logger.sendSimpleMessage(player, "&2Support & discussion Discord: &9&nhttps://discord.gg/eSxvPbWYy4");
+                Logger.sendSimpleMessage(player, "&2查看完整安装指南: &9&nhttps://nightbreak.io/plugin/betterstructures/#setup");
+                Logger.sendSimpleMessage(player, "&2通过 &6/bs setup &2查看可用内容！");
+                Logger.sendSimpleMessage(player, "&2支持与讨论 Discord: &9&nhttps://discord.gg/eSxvPbWYy4");
                 Logger.sendSimpleMessage(player, "&8&m-----------------------------------------------------");
             }
         };
@@ -45,16 +45,16 @@ public class BetterStructuresFirstTimeSetupMenu {
                 !Bukkit.getPluginManager().isPluginEnabled("FastAsyncWorldEdit")) {
             return new MenuButton(ItemStackGenerator.generateItemStack(
                     Material.RED_STAINED_GLASS_PANE,
-                    "&cWorldEdit not installed!",
-                    List.of("&cYou must install WorldEdit for",
-                            "&cBetterStructures to work!"))) {
+                    "&cWorldEdit 未安装！",
+                    List.of("&c你必须安装 WorldEdit",
+                            "&c才能使用 BetterStructures！"))) {
                 @Override
                 public void onClick(Player player) {
                     player.closeInventory();
                     Logger.sendSimpleMessage(player, "&8&m-----------------------------------------------------");
-                    Logger.sendSimpleMessage(player, "&c&lYou must install WorldEdit for BetterStructures to work!");
-                    Logger.sendSimpleMessage(player, "&c&You can download it here: &9&nhttps://dev.bukkit.org/projects/worldedit");
-                    Logger.sendSimpleMessage(player, "&4&lMake sure you get the right WorldEdit version for your Minecraft version!");
+                    Logger.sendSimpleMessage(player, "&c&l你必须安装 WorldEdit 才能使用 BetterStructures！");
+                    Logger.sendSimpleMessage(player, "&c你可以在这里下载: &9&nhttps://dev.bukkit.org/projects/worldedit");
+                    Logger.sendSimpleMessage(player, "&4&l请确保下载与你的 Minecraft 版本匹配的 WorldEdit 版本！");
                     Logger.sendSimpleMessage(player, "&8&m-----------------------------------------------------");
                 }
             };
@@ -63,18 +63,18 @@ public class BetterStructuresFirstTimeSetupMenu {
         if (SchematicConfig.getSchematicConfigurations().isEmpty()) {
             return new MenuButton(ItemStackGenerator.generateItemStack(
                     Material.YELLOW_STAINED_GLASS_PANE,
-                    "&cNo content installed!",
-                    List.of("&cCould not detect any structures installed",
-                            "&cfor BetterStructures! Click for more",
-                            "&cinformation!"))) {
+                    "&c未安装内容！",
+                    List.of("&c未检测到已安装的建筑",
+                            "&cBetterStructures 没有可用内容！",
+                            "&c点击获取更多信息！"))) {
                 @Override
                 public void onClick(Player player) {
                     player.closeInventory();
                     Logger.sendSimpleMessage(player, "&8&m-----------------------------------------------------");
-                    Logger.sendSimpleMessage(player, "&c&lBetterStructures requires either downloading or creating builds to work!");
-                    Logger.sendSimpleMessage(player, "&cYou can download builds here: &9&nhttps://nightbreak.io/plugin/betterstructures/#content");
-                    Logger.sendSimpleMessage(player, "&cOnce downloaded, just drag and drop it into the imports folder of BetterStructures and &4/bs reload&c. Setup video: &9&https://www.youtube.com/watch?v=1z47lSxmyq0");
-                    Logger.sendSimpleMessage(player, "&4You can also just make your own content! Check the wiki for more information! &9&nhttps://magmaguy.com/wiki.html");
+                    Logger.sendSimpleMessage(player, "&c&lBetterStructures 需要下载或创建建筑才能工作！");
+                    Logger.sendSimpleMessage(player, "&c你可以在这里下载建筑: &9&nhttps://nightbreak.io/plugin/betterstructures/#content");
+                    Logger.sendSimpleMessage(player, "&c下载后，将其拖放到 BetterStructures 的 imports 文件夹中并执行 &4/bs reload&c。安装视频: &9&nhttps://www.youtube.com/watch?v=1z47lSxmyq0");
+                    Logger.sendSimpleMessage(player, "&4你也可以自己制作内容！查看 Wiki 获取更多信息！&9&nhttps://magmaguy.com/wiki.html");
                     Logger.sendSimpleMessage(player, "&8&m-----------------------------------------------------");
                 }
             };
@@ -82,17 +82,17 @@ public class BetterStructuresFirstTimeSetupMenu {
 
         return new MenuButton(ItemStackGenerator.generateItemStack(
                 Material.GREEN_STAINED_GLASS_PANE,
-                "&2Seems like everything is ready to go!",
-                List.of("&aClick here to complete the first time setup!"))) {
+                "&2看起来一切准备就绪！",
+                List.of("&a点击此处完成首次设置！"))) {
             @Override
             public void onClick(Player player) {
                 DefaultConfig.toggleSetupDone();
                 player.closeInventory();
                 Logger.sendSimpleMessage(player, "&8&m-----------------------------------------------------");
-                Logger.sendSimpleMessage(player, "&2Congratulations! Seems like your server is ready to start generating better structures!");
-                Logger.sendSimpleMessage(player, "&aTo see the content currently installed, run the command &a/betterstructures setup");
-                Logger.sendSimpleMessage(player, "&aTo generate structures, move to new chunks in your server! These must be completely new, never previously generated chunks. BetterStructures will never generate structures in already explored chunks!");
-                Logger.sendSimpleMessage(player, "&aThat's it! Have fun exploring! The first time setup message will never show up again.");
+                Logger.sendSimpleMessage(player, "&2恭喜！你的服务器已准备好开始生成更好的建筑！");
+                Logger.sendSimpleMessage(player, "&a要查看当前已安装的内容，请执行命令 &a/betterstructures setup");
+                Logger.sendSimpleMessage(player, "&a要生成建筑，请移动到服务器中的新区块！这些必须是全新的、从未生成过的区块。BetterStructures 不会在已探索的区块中生成建筑！");
+                Logger.sendSimpleMessage(player, "&a完成！祝你探索愉快！首次设置消息将不再显示。");
                 Logger.sendSimpleMessage(player, "&8&m-----------------------------------------------------");
             }
         };

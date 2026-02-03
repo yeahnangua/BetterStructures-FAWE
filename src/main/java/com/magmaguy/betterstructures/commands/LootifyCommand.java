@@ -41,46 +41,46 @@ public class LootifyCommand extends AdvancedCommand {
     private void lootify(String generator, String rarity, String minAmount, String maxAmount, String weight, Player player) {
         TreasureConfigFields treasureConfigFields = TreasureConfig.getConfigFields(generator);
         if (treasureConfigFields == null) {
-            player.sendMessage("[BetterStructures] Not a valid generator! Try again.");
+            player.sendMessage("[BetterStructures] 无效的生成器！请重试。");
             return;
         }
         //Verify loot table
         if (treasureConfigFields.getRawLoot().get(rarity) == null) {
-            player.sendMessage("[BetterStructures] Not a valid rarity! Try again.");
+            player.sendMessage("[BetterStructures] 无效的稀有度！请重试。");
             return;
         }
         int minAmountInt;
         try {
             minAmountInt = Integer.parseInt(minAmount);
         } catch (Exception exception) {
-            player.sendMessage("[BetterStructures] Not a valid minimum amount! Try again.");
+            player.sendMessage("[BetterStructures] 无效的最小数量！请重试。");
             return;
         }
         if (minAmountInt < 1) {
-            player.sendMessage("[BetterStructures] Minimum amount should not be less than 1! This value will not be saved.");
+            player.sendMessage("[BetterStructures] 最小数量不应小于 1！此值将不会保存。");
             return;
         }
         int maxAmountInt;
         try {
             maxAmountInt = Integer.parseInt(maxAmount);
         } catch (Exception exception) {
-            player.sendMessage("[BetterStructures] Not a valid maximum amount! Try again.");
+            player.sendMessage("[BetterStructures] 无效的最大数量！请重试。");
             return;
         }
         if (maxAmountInt > 64) {
-            player.sendMessage("[BetterStructures] Maximum amount should not be more than 64! If you want more than one stack, make multiple entries. This value will not be saved.");
+            player.sendMessage("[BetterStructures] 最大数量不应超过 64！如需多组请创建多个条目。此值将不会保存。");
             return;
         }
         double weightDouble;
         try {
             weightDouble = Double.parseDouble(weight);
         } catch (Exception exception) {
-            player.sendMessage("[BetterStructures] Not a valid weight! Try again.");
+            player.sendMessage("[BetterStructures] 无效的权重！请重试。");
             return;
         }
         ItemStack itemStack = player.getInventory().getItemInMainHand();
         if (itemStack == null || itemStack.getType().isAir()) {
-            player.sendMessage("[BetterStructures] You need to be holding an item in order to register the item you're holding! This value will not be saved.");
+            player.sendMessage("[BetterStructures] 你需要手持物品才能注册！此值将不会保存。");
             return;
         }
         String info;

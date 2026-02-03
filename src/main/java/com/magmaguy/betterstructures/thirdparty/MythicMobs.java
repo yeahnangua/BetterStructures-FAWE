@@ -32,7 +32,7 @@ public class MythicMobs {
         if (Bukkit.getPluginManager().getPlugin("MythicMobs") == null) {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (player.hasPermission("betterstructures.*")) {
-                    Logger.sendMessage(player, "&cOne of your packs uses the MythicMobs plugin &4but MythicMobs is not currently installed on your server&c! &2You can download it here: &9https://www.spigotmc.org/resources/%E2%9A%94-mythicmobs-free-version-%E2%96%BAthe-1-custom-mob-creator%E2%97%84.5702/");
+                    Logger.sendMessage(player, "&c你的某个内容包使用了 MythicMobs 插件，&4但 MythicMobs 当前未安装在你的服务器上&c！&2你可以在这里下载: &9https://www.spigotmc.org/resources/%E2%9A%94-mythicmobs-free-version-%E2%96%BAthe-1-custom-mob-creator%E2%97%84.5702/");
                 }
             }
             return null;
@@ -43,10 +43,10 @@ public class MythicMobs {
         String mobId = args[0];
         MythicMob mob = MythicBukkit.inst().getMobManager().getMythicMob(mobId).orElse(null);
         if (mob == null) {
-            Logger.warn("Failed to spawn regional boss! Could not find MythicMob with ID: '" + mobId + "'");
-            Logger.warn("  - Original filename parameter: " + filename);
-            Logger.warn("  - Location: " + location.getWorld().getName() + " at " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
-            Logger.warn("  - Make sure a mob with this exact ID exists in ~/plugins/MythicMobs/Mobs/");
+            Logger.warn("生成区域Boss失败！未找到 MythicMob ID: '" + mobId + "'");
+            Logger.warn("  - 原始文件名参数: " + filename);
+            Logger.warn("  - 位置: " + location.getWorld().getName() + " at " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
+            Logger.warn("  - 请确保在 ~/plugins/MythicMobs/Mobs/ 中存在具有此 ID 的生物");
             return null;
         }
 
@@ -54,7 +54,7 @@ public class MythicMobs {
         try {
             level = Double.parseDouble(args[1]);
         } catch (Exception e) {
-            Logger.warn("Failed to parse level for mob " + filename + "!");
+            Logger.warn("解析生物等级失败 " + filename + "！");
             return null;
         }
 

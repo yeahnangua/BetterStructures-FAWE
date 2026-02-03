@@ -30,7 +30,7 @@ public class GenerateModulesCommand extends AdvancedCommand {
 //        }
         ModuleGeneratorsConfigFields moduleGeneratorsConfigFields = ModuleGeneratorsConfig.getModuleGenerators().get(commandData.getStringArgument("moduleGeneratorsConfigFile"));
         if (moduleGeneratorsConfigFields == null) {
-            Logger.sendMessage(commandData.getCommandSender(), "File " + commandData.getStringArgument("moduleGeneratorsConfigFile") + " not found! The world won't generate.");
+            Logger.sendMessage(commandData.getCommandSender(), "文件 " + commandData.getStringArgument("moduleGeneratorsConfigFile") + " 未找到！世界将不会生成。");
             return;
         }
         WFCGenerator.generateFromConfig(

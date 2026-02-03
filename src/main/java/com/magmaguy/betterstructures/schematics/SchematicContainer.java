@@ -60,7 +60,7 @@ public class SchematicContainer {
         this.configFilename = configFilename;
         generatorConfigFields = schematicConfigField.getGeneratorConfigFields();
         if (generatorConfigFields == null) {
-            Logger.warn("Failed to assign generator for configuration of schematic " + schematicConfigField.getFilename() + " ! This means this structure will not appear in the world.");
+            Logger.warn("为建筑模板 " + schematicConfigField.getFilename() + " 分配生成器失败！这意味着该建筑将不会出现在世界中。");
             return;
         }
         for (int x = 0; x <= clipboard.getDimensions().x(); x++)
@@ -106,15 +106,15 @@ public class SchematicContainer {
                                 if (line2.equalsIgnoreCase("WITHER_CRYSTAL"))
                                     entityType = EntityType.END_CRYSTAL;
                                 else {
-                                    Logger.warn("Failed to determine entity type for sign! Entry was " + line2 + " in schematic " + clipboardFilename + " ! Fix this by inputting a valid entity type!");
+                                    Logger.warn("无法确定告示牌的实体类型！条目为 " + line2 + "，建筑模板 " + clipboardFilename + " ！请输入有效的实体类型来修复！");
                                     continue;
                                 }
                             }
                             vanillaSpawns.put(new Vector(x, y, z), entityType);
                         } else if (line1.toLowerCase(Locale.ROOT).contains("[elitemobs]")) {
                             if (Bukkit.getPluginManager().getPlugin("EliteMobs") == null) {
-                                Bukkit.getLogger().warning("[BetterStructures] " + configFilename + " uses EliteMobs bosses but you do not have EliteMobs installed! BetterStructures does not require EliteMobs to work, but if you want cool EliteMobs boss fights you will have to install EliteMobs here: https://nightbreak.io/plugin/elitemobs/");
-                                Bukkit.getLogger().warning("[BetterStructures] Since EliteMobs is not installed, " + configFilename + " will not be used.");
+                                Bukkit.getLogger().warning("[BetterStructures] " + configFilename + " 使用了 EliteMobs Boss，但你未安装 EliteMobs！BetterStructures 不需要 EliteMobs 即可运行，但如果你想要酷炫的 EliteMobs Boss 战斗，请在此安装: https://nightbreak.io/plugin/elitemobs/");
+                                Bukkit.getLogger().warning("[BetterStructures] 由于未安装 EliteMobs，" + configFilename + " 将不会被使用。");
                                 valid = false;
                                 return;
                             }
@@ -123,8 +123,8 @@ public class SchematicContainer {
                             eliteMobsSpawns.put(new Vector(x, y, z), filename);
                         } else if (line1.toLowerCase(Locale.ROOT).contains("[mythicmobs]")) { // carm start - Support MythicMobs
                             if (Bukkit.getPluginManager().getPlugin("MythicMobs") == null) {
-                                Bukkit.getLogger().warning("[BetterStructures] " + configFilename + " uses MythicMobs bosses but you do not have MythicMobs installed! BetterStructures does not require MythicMobs to work, but if you want MythicMobs boss fights you will have to install MythicMobs.");
-                                Bukkit.getLogger().warning("[BetterStructures] Since MythicMobs is not installed, " + configFilename + " will not be used.");
+                                Bukkit.getLogger().warning("[BetterStructures] " + configFilename + " 使用了 MythicMobs Boss，但你未安装 MythicMobs！BetterStructures 不需要 MythicMobs 即可运行，但如果你想要 MythicMobs Boss 战斗，请安装 MythicMobs。");
+                                Bukkit.getLogger().warning("[BetterStructures] 由于未安装 MythicMobs，" + configFilename + " 将不会被使用。");
                                 valid = false;
                                 return;
                             }
@@ -138,7 +138,7 @@ public class SchematicContainer {
         if (schematicConfigField.getTreasureFile() != null && !schematicConfigField.getTreasureFile().isEmpty()) {
             TreasureConfigFields treasureConfigFields = TreasureConfig.getConfigFields(schematicConfigField.getFilename());
             if (treasureConfigFields == null) {
-                Logger.warn("Failed to get treasure configuration " + schematicConfigField.getTreasureFile());
+                Logger.warn("获取宝藏配置失败 " + schematicConfigField.getTreasureFile());
                 return;
             }
             chestContents = schematicConfigField.getChestContents();

@@ -150,8 +150,8 @@ public class FitAnything {
                     for (Player player : Bukkit.getOnlinePlayers())
                         if (player.hasPermission("betterstructures.warn"))
                             player.spigot().sendMessage(
-                                    SpigotMessage.commandHoverMessage("[BetterStructures] New " + structureTypeString + " building generated! Click to teleport. Do \"/betterstructures silent\" to stop getting warnings!",
-                                            "Click to teleport to " + location.getWorld().getName() + ", " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + "\n Schem name: " + schematicContainer.getConfigFilename(),
+                                    SpigotMessage.commandHoverMessage("[BetterStructures] 新的" + structureTypeString + "建筑已生成！点击传送。执行 \"/betterstructures silent\" 停止警告！",
+                                            "点击传送到 " + location.getWorld().getName() + ", " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + "\n 模板名称: " + schematicContainer.getConfigFilename(),
                                             "/betterstructures teleport " + location.getWorld().getName() + " " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ())
                             );
                 }
@@ -167,33 +167,33 @@ public class FitAnything {
                     try {
                         addPedestal(location);
                     } catch (Exception exception) {
-                        Logger.warn("Failed to correctly assign pedestal material!");
+                        Logger.warn("分配基座材料失败！");
                         exception.printStackTrace();
                     }
                     try {
                         if (fitAnything instanceof FitSurfaceBuilding)
                             clearTrees(location);
                     } catch (Exception exception) {
-                        Logger.warn("Failed to correctly clear trees!");
+                        Logger.warn("清除树木失败！");
                         exception.printStackTrace();
                     }
                 }
                 try {
                     fillChests();
                 } catch (Exception exception) {
-                    Logger.warn("Failed to correctly fill chests!");
+                    Logger.warn("填充箱子失败！");
                     exception.printStackTrace();
                 }
                 try {
                     spawnEntities();
                 } catch (Exception exception) {
-                    Logger.warn("Failed to correctly spawn entities!");
+                    Logger.warn("生成实体失败！");
                     exception.printStackTrace();
                 }
                 try{
                     spawnProps(fitAnything.schematicClipboard);
                 } catch (Exception exception) {
-                    Logger.warn("Failed to correctly spawn props!");
+                    Logger.warn("生成装饰物失败！");
                     exception.printStackTrace();
                 }
             }
@@ -324,7 +324,7 @@ public class FitAnything {
             for (Vector chestPosition : schematicContainer.getChestLocations()) {
                 Location chestLocation = LocationProjector.project(location, schematicOffset, chestPosition);
                 if (!(chestLocation.getBlock().getState() instanceof Container container)) {
-                    Logger.warn("Expected a container for " + chestLocation.getBlock().getType() + " but didn't get it. Skipping this loot!");
+                    Logger.warn("预期 " + chestLocation.getBlock().getType() + " 是容器但未获取到。跳过此战利品！");
                     continue;
                 }
 
@@ -427,7 +427,7 @@ public class FitAnything {
             } else {
                 if (!worldGuardWarn) {
                     worldGuardWarn = true;
-                    Logger.warn("You are not using WorldGuard, so BetterStructures could not protect a boss arena! Using WorldGuard is recommended to guarantee a fair combat experience.");
+                    Logger.warn("你未使用 WorldGuard，因此 BetterStructures 无法保护Boss竞技场！建议使用 WorldGuard 以保证公平的战斗体验。");
                 }
             }
         }

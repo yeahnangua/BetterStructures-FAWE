@@ -375,7 +375,7 @@ public class MobTrackingManager {
                         }
                         spawnedMob.setPersistent(true);
                     } catch (IllegalArgumentException e) {
-                        Logger.warn("Failed to respawn vanilla mob: " + config.getMobIdentifier());
+                        Logger.warn("重生原版生物失败: " + config.getMobIdentifier());
                     }
                     break;
 
@@ -417,7 +417,7 @@ public class MobTrackingManager {
         // Mark for saving
         StructureLocationManager.getInstance().markDirty(structure.getWorldName());
 
-        Logger.info("Structure at " + structure.getFormattedCoordinates() + " has been cleared!");
+        Logger.info("位于 " + structure.getFormattedCoordinates() + " 的建筑已被清除！");
     }
 
     /**
@@ -474,10 +474,10 @@ public class MobTrackingManager {
                     .replace("{z}", String.valueOf(z));
 
             try {
-                Logger.info("Executing test command: " + parsedCommand);
+                Logger.info("执行测试命令: " + parsedCommand);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsedCommand);
             } catch (Exception e) {
-                Logger.warn("Failed to execute test command: " + parsedCommand + " - " + e.getMessage());
+                Logger.warn("执行测试命令失败: " + parsedCommand + " - " + e.getMessage());
             }
         }
     }
@@ -497,6 +497,6 @@ public class MobTrackingManager {
             }
         }
 
-        Logger.info("Rebuilt mob tracking spatial index");
+        Logger.info("已重建生物追踪空间索引");
     }
 }

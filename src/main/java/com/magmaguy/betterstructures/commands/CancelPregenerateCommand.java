@@ -28,7 +28,7 @@ public class CancelPregenerateCommand extends AdvancedCommand {
                 .toList();
 
         if (worldPregenerators.isEmpty()) {
-            Logger.sendMessage(commandData.getCommandSender(), "&cNo active pregeneration found in world: " + world.getName());
+            Logger.sendMessage(commandData.getCommandSender(), "&c未找到正在进行的预生成任务，世界: " + world.getName());
             return;
         }
 
@@ -39,7 +39,7 @@ public class CancelPregenerateCommand extends AdvancedCommand {
             cancelled++;
         }
 
-        Logger.sendMessage(commandData.getCommandSender(), "&2Cancelled " + cancelled + " pregeneration process(es) in world: " + world.getName());
+        Logger.sendMessage(commandData.getCommandSender(), "&2已取消 " + cancelled + " 个预生成任务，世界: " + world.getName());
     }
 }
 

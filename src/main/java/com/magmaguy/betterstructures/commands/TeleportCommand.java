@@ -34,7 +34,7 @@ public class TeleportCommand extends AdvancedCommand {
             double z = Double.parseDouble(commandData.getStringArgument("z"));
             commandData.getPlayerSender().teleport(new Location(world, x, y, z));
         } catch (Exception ex) {
-            Logger.sendMessage(commandData.getCommandSender(), "Failed to teleport to location because the location wasn't valid!");
+            Logger.sendMessage(commandData.getCommandSender(), "传送失败，因为目标位置无效！");
         }
     }
 }

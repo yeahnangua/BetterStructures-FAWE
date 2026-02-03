@@ -33,7 +33,7 @@ public class PregenerateCommand extends AdvancedCommand {
         String setWorldBorderArg = commandData.getStringArgument("setWorldBorder");
 
         if (radius < 0) {
-            Logger.sendMessage(commandData.getCommandSender(), "&cRadius must be 0 or greater.");
+            Logger.sendMessage(commandData.getCommandSender(), "&c半径必须大于或等于 0。");
             return;
         }
 
@@ -52,26 +52,26 @@ public class PregenerateCommand extends AdvancedCommand {
                 center = world.getSpawnLocation();
                 break;
             default:
-                Logger.sendMessage(commandData.getCommandSender(), "&cInvalid center argument. Use HERE, WORLD_CENTER, or WORLD_SPAWN.");
+                Logger.sendMessage(commandData.getCommandSender(), "&c无效的中心参数。请使用 HERE、WORLD_CENTER 或 WORLD_SPAWN。");
                 return;
         }
 
         boolean setWorldBorder = "TRUE".equalsIgnoreCase(setWorldBorderArg);
 
         if (!"SQUARE".equalsIgnoreCase(shape) && !"CIRCLE".equalsIgnoreCase(shape)) {
-            Logger.sendMessage(commandData.getCommandSender(), "&cInvalid shape. Use SQUARE or CIRCLE.");
+            Logger.sendMessage(commandData.getCommandSender(), "&c无效的形状。请使用 SQUARE 或 CIRCLE。");
             return;
         }
 
         int radiusInBlocks = radius;
         int radiusInChunks = (int) Math.ceil(radiusInBlocks / 16.0);
 
-        Logger.sendMessage(commandData.getCommandSender(), "&2Starting chunk pregeneration with shape: " + shape + ", center: " + centerArg + ", radius: " + radiusInBlocks + " blocks (" + radiusInChunks + " chunks)");
+        Logger.sendMessage(commandData.getCommandSender(), "&2开始区块预生成，形状: " + shape + ", center: " + centerArg + ", radius: " + radiusInBlocks + " blocks (" + radiusInChunks + " chunks)");
         if (setWorldBorder) {
-            Logger.sendMessage(commandData.getCommandSender(), "&2World border will be set to match the generated area.");
+            Logger.sendMessage(commandData.getCommandSender(), "&2世界边界将设置为与生成区域匹配。");
         }
-        Logger.sendMessage(commandData.getCommandSender(), "&7Progress will be reported in the console every 30 seconds.");
-        Logger.sendMessage(commandData.getCommandSender(), "&7Use &2/betterstructures cancelPregenerate &7to cancel if needed.");
+        Logger.sendMessage(commandData.getCommandSender(), "&7进度将每 30 秒在控制台报告一次。");
+        Logger.sendMessage(commandData.getCommandSender(), "&7如需取消请使用 &2/betterstructures cancelPregenerate &7命令。");
 
         ChunkPregenerator pregenerator = new ChunkPregenerator(world, center, shape, radiusInBlocks, radiusInChunks, setWorldBorder);
         pregenerator.start();

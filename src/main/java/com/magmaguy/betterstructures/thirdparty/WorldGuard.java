@@ -42,23 +42,23 @@ public class WorldGuard implements Listener {
         try {
             registry = com.sk89q.worldguard.WorldGuard.getInstance().getFlagRegistry();
         } catch (Exception ex) {
-            Logger.warn("Something went wrong while loading WorldGuard. Are you using the right WorldGuard version?");
+            Logger.warn("加载 WorldGuard 时出错。你是否使用了正确的 WorldGuard 版本？");
             return;
         }
 
         if (BETTERSTRUCTURES_PROTECTED != null) {
-            Logger.info("Flag betterstructures-protect is already registered, this is normal if the plugin or server have just been reloaded.");
+            Logger.info("标志 betterstructures-protect 已注册，如果插件或服务器刚重载过，这是正常的。");
             return;
         }
 
-        Bukkit.getLogger().info("[BetterStructures] Enabling flags:");
+        Bukkit.getLogger().info("[BetterStructures] 正在启用标志:");
         try {
             BETTERSTRUCTURES_PROTECTED = new StateFlag("betterstructures-protect", false);
             registry.register(BETTERSTRUCTURES_PROTECTED);
-            Bukkit.getLogger().info("[BetteStructures] - betterstructures-protect");
+            Bukkit.getLogger().info("[BetterStructures] - betterstructures-protect");
         } catch (FlagConflictException | IllegalStateException e) {
             //e.printStackTrace();
-            Bukkit.getLogger().warning("[EliteMobs] Warning: flag betterstructures-protect already exists! This is normal if you've just now reloaded BetterStructures.");
+            Bukkit.getLogger().warning("[BetterStructures] 警告: 标志 betterstructures-protect 已存在！如果你刚重载了 BetterStructures，这是正常的。");
             BETTERSTRUCTURES_PROTECTED = (StateFlag) registry.get("betterstructures-protect");
         }
     }

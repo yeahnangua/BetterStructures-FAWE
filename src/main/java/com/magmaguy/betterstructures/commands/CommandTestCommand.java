@@ -21,8 +21,8 @@ public class CommandTestCommand extends AdvancedCommand {
     @Override
     public void execute(CommandData commandData) {
         Player player = (Player) commandData.getCommandSender();
-        Logger.sendMessage(player, "&aTesting structure cleared commands at your location...");
+        Logger.sendMessage(player, "&a正在测试你所在位置的建筑清除命令...");
         MobTrackingManager.getInstance().testCommands(player);
-        Logger.sendMessage(player, "&aTest complete! Check console for details.");
+        Logger.sendMessage(player, "&a测试完成！请查看控制台获取详情。");
     }
 }

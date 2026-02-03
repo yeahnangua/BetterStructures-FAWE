@@ -18,7 +18,7 @@ public class VersionCommand extends AdvancedCommand {
 
     @Override
     public void execute(CommandData commandData) {
-        Logger.sendMessage(commandData.getCommandSender(), "&aVersion " +
+        Logger.sendMessage(commandData.getCommandSender(), "&a版本 " +
                 Bukkit.getPluginManager().getPlugin(
                         MetadataHandler.PLUGIN.getName()).getDescription().getVersion());
     }

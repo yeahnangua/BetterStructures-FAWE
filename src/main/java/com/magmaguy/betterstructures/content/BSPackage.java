@@ -42,7 +42,7 @@ public class BSPackage extends ContentPackage {
         player.closeInventory();
         File folder = getSpecificSchematicFolder();
         if (!folder.exists()) {
-            Logger.sendMessage(player, "Failed to find directory " + folder.getAbsolutePath());
+            Logger.sendMessage(player, "未找到目录 " + folder.getAbsolutePath());
             return;
         }
 
@@ -57,8 +57,8 @@ public class BSPackage extends ContentPackage {
         MetadataHandler.PLUGIN.onDisable();
         MetadataHandler.PLUGIN.onLoad();
         MetadataHandler.PLUGIN.onEnable();
-        Logger.sendMessage(player, " Reload attempted. This may not 100% work. Restart instead if it didn't!");
-        Logger.sendMessage(player, "Installed " + contentPackageConfigFields.getName());
+        Logger.sendMessage(player, " 已尝试重载。可能无法完全生效，如有问题请重启服务器！");
+        Logger.sendMessage(player, "已安装 " + contentPackageConfigFields.getName());
     }
 
     @Override
@@ -66,7 +66,7 @@ public class BSPackage extends ContentPackage {
         player.closeInventory();
         File folder = getSpecificSchematicFolder();
         if (!folder.exists()) {
-            Logger.sendMessage(player, "Failed to find directory " + folder.getAbsolutePath());
+            Logger.sendMessage(player, "未找到目录 " + folder.getAbsolutePath());
             return;
         }
 
@@ -81,23 +81,23 @@ public class BSPackage extends ContentPackage {
         MetadataHandler.PLUGIN.onDisable();
         MetadataHandler.PLUGIN.onLoad();
         MetadataHandler.PLUGIN.onEnable();
-        Logger.sendMessage(player, " Reload attempted. This may not 100% work. Restart instead if it didn't!");
+        Logger.sendMessage(player, " 已尝试重载。可能无法完全生效，如有问题请重启服务器！");
 
-        Logger.sendMessage(player, "Uninstalled " + contentPackageConfigFields.getName());
+        Logger.sendMessage(player, "已卸载 " + contentPackageConfigFields.getName());
     }
 
     @Override
     public void doDownload(Player player) {
         player.closeInventory();
         player.sendMessage("----------------------------------------------------");
-        Logger.sendMessage(player, "&4Download this at &9 " + contentPackageConfigFields.getDownloadLink());
+        Logger.sendMessage(player, "&4请在此下载 &9 " + contentPackageConfigFields.getDownloadLink());
         player.sendMessage("----------------------------------------------------");
     }
 
     @Override
     protected ItemStack getInstalledItemStack() {
         List<String> lore = new ArrayList<>(contentPackageConfigFields.getDescription());
-        lore.addAll(List.of("Content is installed!", "Click to uninstall!"));
+        lore.addAll(List.of("内容已安装！", "点击卸载！"));
         return ItemStackGenerator.generateItemStack(Material.GREEN_STAINED_GLASS_PANE, contentPackageConfigFields.getName(), lore);
     }
 
@@ -105,24 +105,24 @@ public class BSPackage extends ContentPackage {
     protected ItemStack getPartiallyInstalledItemStack() {
         List<String> lore = new ArrayList<>(contentPackageConfigFields.getDescription());
         lore.addAll(List.of(
-                "Content partially installed!",
-                "This is either because you haven't downloaded all of it,",
-                "or because some elements have been manually disabled.",
-                "Click to download!"));
+                "内容部分安装！",
+                "这可能是因为你还没有下载完全，",
+                "或者因为某些元素已被手动禁用。",
+                "点击下载！"));
         return ItemStackGenerator.generateItemStack(Material.ORANGE_STAINED_GLASS_PANE, contentPackageConfigFields.getName(), lore);
     }
 
     @Override
     protected ItemStack getNotInstalledItemStack() {
         List<String> lore = new ArrayList<>(contentPackageConfigFields.getDescription());
-        lore.addAll(List.of("Content is not installed!", "Click to install!"));
+        lore.addAll(List.of("内容未安装！", "点击安装！"));
         return ItemStackGenerator.generateItemStack(Material.YELLOW_STAINED_GLASS_PANE, contentPackageConfigFields.getName(), lore);
     }
 
     @Override
     protected ItemStack getNotDownloadedItemStack() {
         List<String> lore = new ArrayList<>(contentPackageConfigFields.getDescription());
-        lore.addAll(List.of("Content is not downloaded!", "Click for download link!"));
+        lore.addAll(List.of("内容未下载！", "点击获取下载链接！"));
         return ItemStackGenerator.generateItemStack(Material.RED_STAINED_GLASS_PANE, contentPackageConfigFields.getName(), lore);
     }
 

@@ -43,7 +43,7 @@ public final class BetterStructures extends JavaPlugin {
         Bukkit.getLogger().info(" / /_/ /  __/ /_/ /_/  __/ /   ___/ / /_/ /  / /_/ / /__/ /_/ /_/ / /  /  __(__  ) ");
         Bukkit.getLogger().info("/_____/\\___/\\__/\\__/\\___/_/   /____/\\__/_/   \\__,_/\\___/\\__/\\__,_/_/   \\___/____/");
         // Plugin startup logic
-        Bukkit.getLogger().info("[BetterStructures] Initialized version " + this.getDescription().getVersion() + "!");
+        Bukkit.getLogger().info("[BetterStructures] 已初始化版本 " + this.getDescription().getVersion() + "!");
         Bukkit.getPluginManager().registerEvents(new NewChunkLoadEvent(), this);
         Bukkit.getPluginManager().registerEvents(new FirstTimeSetupWarner(), this);
         Bukkit.getPluginManager().registerEvents(new ValidWorldsConfig.ValidWorldsConfigEvents(), this);
@@ -69,19 +69,19 @@ public final class BetterStructures extends JavaPlugin {
         new ModulesConfig();
         new ContentPackageConfig();
         ComponentsConfigFolder.initialize();
-        Logger.info("Config initialization completed in " + (System.currentTimeMillis() - configStartTime) + "ms");
+        Logger.info("配置初始化完成，耗时 " + (System.currentTimeMillis() - configStartTime) + "毫秒");
 
         long slmStartTime = System.currentTimeMillis();
         StructureLocationManager.getInstance();
-        Logger.info("StructureLocationManager initialized in " + (System.currentTimeMillis() - slmStartTime) + "ms");
+        Logger.info("建筑位置管理器初始化完成，耗时 " + (System.currentTimeMillis() - slmStartTime) + "毫秒");
 
         // Initialize mob tracking system
         if (DefaultConfig.isMobTrackingEnabled()) {
             long mtmStartTime = System.currentTimeMillis();
             MobTrackingManager.getInstance();
             Bukkit.getPluginManager().registerEvents(new MobDeathListener(), this);
-            Logger.info("MobTrackingManager initialized in " + (System.currentTimeMillis() - mtmStartTime) + "ms");
-            Logger.info("Mob tracking system enabled.");
+            Logger.info("生物追踪管理器初始化完成，耗时 " + (System.currentTimeMillis() - mtmStartTime) + "毫秒");
+            Logger.info("生物追踪系统已启用。");
         }
 
         CommandManager commandManager = new CommandManager(this, "betterstructures");
@@ -115,9 +115,9 @@ public final class BetterStructures extends JavaPlugin {
                     Bukkit.getPluginManager().getPlugin("EliteMobs") != null)
                 WorldGuard.initializeFlag();
             else
-                Logger.info("WorldGuard is not enabled! WorldGuard is recommended when using the EliteMobs integration.");
+                Logger.info("WorldGuard 未启用！使用 EliteMobs 集成时建议安装 WorldGuard。");
         } catch (Exception ex) {
-            Logger.info("WorldGuard could not be detected! Some BetterStructures features use WorldGuard, and they will not work until it is installed.");
+            Logger.info("未检测到 WorldGuard！BetterStructures 的部分功能需要 WorldGuard，在安装之前这些功能将无法使用。");
         }
     }
 
@@ -133,6 +133,6 @@ public final class BetterStructures extends JavaPlugin {
         BSPackage.shutdown();
         ModulesContainer.shutdown();
         WFCGenerator.shutdown();
-        Bukkit.getLogger().info("[BetterStructures] Shutdown!");
+        Bukkit.getLogger().info("[BetterStructures] 已关闭！");
     }
 }

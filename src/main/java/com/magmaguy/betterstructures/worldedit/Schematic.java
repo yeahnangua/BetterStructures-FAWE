@@ -62,14 +62,14 @@ public class Schematic {
             e.printStackTrace();
             return null;
         } catch (NoSuchElementException e) {
-            Logger.warn("Failed to get element from schematic " + schematicFile.getName());
+            Logger.warn("从建筑模板获取元素失败 " + schematicFile.getName());
             e.printStackTrace();
             return null;
         } catch (Exception e) {
-            Logger.warn("Failed to load schematic " + schematicFile.getName() + " ! 99% of the time, this is because you are not using the correct WorldEdit version for your Minecraft server. You should be downloading WorldEdit from here https://dev.bukkit.org/projects/worldedit . You can check which versions the download links are compatible with by hovering over them.");
+            Logger.warn("加载建筑模板 " + schematicFile.getName() + " 失败！99% 的情况下，这是因为你没有使用与你的 Minecraft 服务器匹配的 WorldEdit 版本。请从这里下载 WorldEdit: https://dev.bukkit.org/projects/worldedit 。你可以将鼠标悬停在下载链接上查看兼容的版本。");
             erroredOnce = true;
             if (!erroredOnce) e.printStackTrace();
-            else Logger.warn("Hiding stacktrace for this error, as it has already been printed once");
+            else Logger.warn("隐藏此错误的堆栈跟踪，因为已经打印过一次");
             return null;
         }
         return clipboard;
@@ -239,7 +239,7 @@ public class Schematic {
 
         org.bukkit.World world = location.getWorld();
         if (world == null) {
-            Logger.warn("Cannot paste: world is null");
+            Logger.warn("无法粘贴: 世界为空");
             return;
         }
 

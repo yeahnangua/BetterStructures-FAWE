@@ -31,7 +31,7 @@ public class EliteMobs {
         if (Bukkit.getPluginManager().getPlugin("EliteMobs") != null) {
             RegionalBossEntity regionalBossEntity = RegionalBossEntity.SpawnRegionalBoss(filename, location);
             if (regionalBossEntity == null) {
-                Logger.warn("Failed to spawn regional boss " + filename + "! The filename for this boss probably does not match the filename that should be in ~/plugins/EliteMobs/custombosses/");
+                Logger.warn("生成区域Boss失败 " + filename + "！该Boss的文件名可能与 ~/plugins/EliteMobs/custombosses/ 中的文件名不匹配");
                 return null;
             } else {
                 regionalBossEntity.spawn(false);
@@ -41,8 +41,8 @@ public class EliteMobs {
         } else {
             for (Player player : Bukkit.getOnlinePlayers())
                 if (player.hasPermission("betterstructures.*"))
-                    Logger.sendMessage(player, "&cOne of your packs uses the EliteMobs plugin &4but EliteMobs is not currently installed on your server&c!" +
-                            " &2You can download it here: &9https://nightbreak.io/plugin/elitemobs/");
+                    Logger.sendMessage(player, "&c你的某个内容包使用了 EliteMobs 插件，&4但 EliteMobs 当前未安装在你的服务器上&c！" +
+                            " &2你可以在这里下载: &9https://nightbreak.io/plugin/elitemobs/");
             return null;
         }
     }
