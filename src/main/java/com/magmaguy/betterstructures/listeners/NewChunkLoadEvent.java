@@ -16,10 +16,13 @@ import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsCon
 import com.magmaguy.betterstructures.modules.WFCGenerator;
 import com.magmaguy.betterstructures.schematics.SchematicContainer;
 import org.bukkit.Chunk;
+import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
@@ -32,10 +35,25 @@ import java.util.concurrent.ThreadLocalRandom;
 public class NewChunkLoadEvent implements Listener {
 
     private static final Set<Chunk> loadingChunks = ConcurrentHashMap.newKeySet();
+    private static final NamespacedKey PROCESSED_KEY = new NamespacedKey("betterstructures", "chunk_processed");
+
+    /**
+     * Checks whether BetterStructures has already processed this chunk.
+     */
+    private boolean isChunkProcessed(Chunk chunk) {
+        return chunk.getPersistentDataContainer().has(PROCESSED_KEY, PersistentDataType.BYTE);
+    }
+
+    /**
+     * Marks a chunk as processed by BetterStructures.
+     */
+    private void markChunkProcessed(Chunk chunk) {
+        chunk.getPersistentDataContainer().set(PROCESSED_KEY, PersistentDataType.BYTE, (byte) 1);
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChunkLoad(ChunkLoadEvent event) {
-        if (!event.isNewChunk()) return;
+        if (isChunkProcessed(event.getChunk())) return;
         if (loadingChunks.contains(event.getChunk())) return;
         //In some cases the same chunk gets loaded (at least at an event level) several times, this prevents the plugin from doing multiple scans and placing multiple builds, enhancing performance
         loadingChunks.add(event.getChunk());
@@ -88,6 +106,7 @@ public class NewChunkLoadEvent implements Listener {
                 }
 
                 runScanners(chunk);
+                markChunkProcessed(chunk);
             }
         }.runTaskLater(MetadataHandler.PLUGIN, finalDelayTicks);
     }
