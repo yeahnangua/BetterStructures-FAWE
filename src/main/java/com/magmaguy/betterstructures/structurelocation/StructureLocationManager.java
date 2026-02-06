@@ -33,8 +33,8 @@ public class StructureLocationManager {
     // Auto-save task
     private BukkitRunnable saveTask;
 
-    // Save interval in ticks (5 minutes = 6000 ticks)
-    private static final long SAVE_INTERVAL_TICKS = 6000L;
+    // Save interval in ticks (1 minute = 1200 ticks)
+    private static final long SAVE_INTERVAL_TICKS = 1200L;
 
     private StructureLocationManager() {
         this.storageFolder = new File(MetadataHandler.PLUGIN.getDataFolder(), "structure_locations");

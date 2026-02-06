@@ -77,8 +77,8 @@ public class NewChunkLoadEvent implements Listener {
                     return;
                 }
 
-                // Validate chunk is fully generated (Terra compatibility)
-                if (!ChunkValidationUtil.isChunkFullyGenerated(chunk)) {
+                // Validate chunk is fully ready (ENTITY_TICKING level for Paper, FAWE compatibility)
+                if (!ChunkValidationUtil.isChunkFullyReady(chunk)) {
                     if (attemptNumber < maxAttempts) {
                         // Retry with same delay
                         scheduleStructureScan(chunk, attemptNumber + 1);

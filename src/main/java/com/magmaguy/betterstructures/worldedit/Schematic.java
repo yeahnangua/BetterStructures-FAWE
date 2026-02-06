@@ -246,37 +246,37 @@ public class Schematic {
         // Step 1: Calculate required chunks WITHOUT accessing world
         Set<Long> requiredChunks = calculateRequiredChunks(schematicClipboard, location, schematicOffset);
 
-        // Step 2: Check which chunks need generation
+        // Step 2: Load all required chunks asynchronously
+        // Always load chunks, not just ungenerated ones - chunks may be generated but unloaded
         List<CompletableFuture<Chunk>> chunkFutures = new ArrayList<>();
         for (Long key : requiredChunks) {
             int chunkX = (int) (key >> 32);
             int chunkZ = key.intValue();
 
-            Chunk chunk = world.getChunkAt(chunkX, chunkZ);
-            if (!chunk.isGenerated()) {
-                chunkFutures.add(world.getChunkAtAsync(chunkX, chunkZ, true));
-            }
+            // Always use getChunkAtAsync to ensure chunk is loaded into memory
+            // isChunkGenerated() only checks if chunk exists on disk, not if it's in memory
+            chunkFutures.add(world.getChunkAtAsync(chunkX, chunkZ, true));
         }
 
         if (chunkFutures.isEmpty()) {
-            // All chunks already generated, proceed immediately
+            // No chunks required (empty schematic?), proceed immediately
             if (prePasteCallback != null) prePasteCallback.run();
             List<PasteBlock> pasteBlocks = createPasteBlocks(
                     schematicClipboard, location, schematicOffset, pedestalMaterialProvider);
-            queuePasteOperation(pasteBlocks, location, onComplete);
+            queuePasteOperation(pasteBlocks, location, onComplete, requiredChunks);
         } else {
-            // Wait for all chunks to generate
-            Logger.debug("Waiting for " + chunkFutures.size() + " chunks to generate before pasting at " +
+            // Wait for all chunks to be loaded into memory
+            Logger.debug("Loading " + chunkFutures.size() + " chunks before pasting at " +
                     location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ());
 
             CompletableFuture.allOf(chunkFutures.toArray(new CompletableFuture[0]))
                     .thenRun(() -> {
-                        // Schedule on main thread after all chunks generated
+                        // Schedule on main thread after all chunks are loaded
                         Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
                             if (prePasteCallback != null) prePasteCallback.run();
                             List<PasteBlock> pasteBlocks = createPasteBlocks(
                                     schematicClipboard, location, schematicOffset, pedestalMaterialProvider);
-                            queuePasteOperation(pasteBlocks, location, onComplete);
+                            queuePasteOperation(pasteBlocks, location, onComplete, requiredChunks);
                         });
                     });
         }
@@ -285,6 +285,7 @@ public class Schematic {
     /**
      * Pastes blocks using a distributed workload over multiple ticks.
      * IMPORTANT: Caller must ensure all chunks are generated before calling this method.
+     * Note: This method doesn't add chunk tickets - use pasteSchematic() for full chunk management.
      *
      * @param pasteBlocks List of blocks to paste
      * @param location    The location reference
@@ -297,7 +298,8 @@ public class Schematic {
         }
 
         // Chunks are already verified by pasteSchematic(), proceed directly to queue
-        queuePasteOperation(pasteBlocks, location, onComplete);
+        // Note: This method doesn't add chunk tickets - use pasteSchematic() for full chunk management
+        queuePasteOperation(pasteBlocks, location, onComplete, Collections.emptySet());
     }
 
     /**
@@ -310,9 +312,19 @@ public class Schematic {
     /**
      * Queues the paste operation for distributed processing.
      */
-    private static void queuePasteOperation(List<PasteBlock> pasteBlocks, Location location, Runnable onComplete) {
+    private static void queuePasteOperation(List<PasteBlock> pasteBlocks, Location location, Runnable onComplete, Set<Long> requiredChunks) {
+        // Add chunk tickets to keep chunks loaded during paste
+        org.bukkit.World world = location.getWorld();
+        if (world != null) {
+            for (Long key : requiredChunks) {
+                int chunkX = (int) (key >> 32);
+                int chunkZ = key.intValue();
+                world.addPluginChunkTicket(chunkX, chunkZ, MetadataHandler.PLUGIN);
+            }
+        }
+
         // Add this paste operation to the queue
-        pasteQueue.add(new PasteBlockOperation(pasteBlocks, location, onComplete));
+        pasteQueue.add(new PasteBlockOperation(pasteBlocks, location, onComplete, requiredChunks));
 
         // If we're not currently pasting, start processing the queue
         if (!isDistributedPasting) {
@@ -334,6 +346,16 @@ public class Schematic {
 
         // Create a workload for this paste operation
         WorkloadRunnable workload = new WorkloadRunnable(DefaultConfig.getPercentageOfTickUsedForPasting(), () -> {
+            // Release chunk tickets after paste completes
+            org.bukkit.World world = operation.location.getWorld();
+            if (world != null && operation.requiredChunks != null) {
+                for (Long key : operation.requiredChunks) {
+                    int chunkX = (int) (key >> 32);
+                    int chunkZ = key.intValue();
+                    world.removePluginChunkTicket(chunkX, chunkZ, MetadataHandler.PLUGIN);
+                }
+            }
+
             // Run the completion callback if provided
             if (operation.onComplete != null) {
                 operation.onComplete.run();
@@ -368,7 +390,7 @@ public class Schematic {
     /**
      * Represents a single paste operation
      */
-    private record PasteBlockOperation(List<PasteBlock> blocks, Location location, Runnable onComplete) {
+    private record PasteBlockOperation(List<PasteBlock> blocks, Location location, Runnable onComplete, Set<Long> requiredChunks) {
     }
 
     public record PasteBlock(Block block, BlockData blockData, Clipboard clipboard) {

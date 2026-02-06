@@ -134,4 +134,62 @@ public class ChunkValidationUtil {
 
         return chunks;
     }
+
+    /**
+     * Checks if a chunk has reached ENTITY_TICKING load level (fully ready).
+     * This is the highest load level, meaning the chunk is fully loaded,
+     * all neighbors are loaded, and entities can tick.
+     *
+     * This provides better compatibility with FAWE and async world generators
+     * by ensuring the chunk is completely ready before structure placement.
+     *
+     * @param chunk the chunk to check
+     * @return true if the chunk is at ENTITY_TICKING level, false otherwise
+     */
+    public static boolean isChunkFullyReady(Chunk chunk) {
+        if (chunk == null || !chunk.isLoaded()) return false;
+
+        try {
+            // Paper API: Check if chunk has reached the highest load level
+            // ENTITY_TICKING means chunk is fully loaded with all neighbors ready
+            return chunk.getLoadLevel() == Chunk.LoadLevel.ENTITY_TICKING;
+        } catch (NoSuchMethodError | NoClassDefFoundError e) {
+            // Fallback for non-Paper servers: use basic generation check
+            return isChunkFullyGenerated(chunk);
+        }
+    }
+
+    /**
+     * Checks if a chunk and all its immediate neighbors (3x3 area) are fully ready.
+     * This is important for structure placement as structures often span multiple chunks.
+     *
+     * @param chunk the center chunk to check
+     * @return true if the center chunk and all 8 neighbors are fully ready
+     */
+    public static boolean isChunkAreaFullyReady(Chunk chunk) {
+        if (chunk == null) return false;
+
+        World world = chunk.getWorld();
+        int cx = chunk.getX();
+        int cz = chunk.getZ();
+
+        // Check 3x3 area centered on the chunk
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                int checkX = cx + dx;
+                int checkZ = cz + dz;
+
+                if (!world.isChunkLoaded(checkX, checkZ)) {
+                    return false;
+                }
+
+                Chunk neighborChunk = world.getChunkAt(checkX, checkZ);
+                if (!isChunkFullyReady(neighborChunk)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 }
