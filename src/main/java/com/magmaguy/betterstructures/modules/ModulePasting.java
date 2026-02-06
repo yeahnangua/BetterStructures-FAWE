@@ -10,10 +10,8 @@ import com.magmaguy.betterstructures.config.treasures.TreasureConfig;
 import com.magmaguy.betterstructures.config.treasures.TreasureConfigFields;
 import com.magmaguy.betterstructures.structurelocation.StructureLocationManager;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
-import com.magmaguy.easyminecraftgoals.NMSManager;
 import com.magmaguy.magmacore.util.Logger;
 import com.magmaguy.magmacore.util.SpigotMessage;
-import com.magmaguy.magmacore.util.WorkloadRunnable;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
@@ -30,10 +28,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Directional;
-import org.bukkit.block.data.Rail;
 import org.bukkit.block.data.type.Chest;
-import org.bukkit.block.data.type.Sign;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -50,11 +45,10 @@ public final class ModulePasting {
     private final String spawnPoolSuffix;
     private final Location startLocation;
     private final boolean createModularWorld;
-    private final List<NbtPlacement> nbtToPlace = new ArrayList<>();
-    private ModularWorld modularWorld;
     private final World world;
     private final File worldFolder;
     private final ModuleGeneratorsConfigFields moduleGeneratorsConfigFields;
+    private ModularWorld modularWorld;
 
     public ModulePasting(World world, File worldFolder, Deque<WFCNode> WFCNodeDeque, String spawnPoolSuffix, Location startLocation, ModuleGeneratorsConfigFields moduleGeneratorsConfigFields) {
         this.spawnPoolSuffix = spawnPoolSuffix;
@@ -194,7 +188,9 @@ public final class ModulePasting {
     private List<Pasteable> generatePasteMeList(Clipboard clipboard,
                                                 Location worldPasteOriginLocation,
                                                 Integer rotation,
-                                                List<InterpretedSign> interpretedSigns) {
+                                                List<InterpretedSign> interpretedSigns,
+                                                List<BedrockCandidate> bedrockCandidates,
+                                                List<NbtPlacement> nbtToPlace) {
         List<Pasteable> pasteableList = new ArrayList<>();
 
         // Apply rotation transformation
@@ -254,20 +250,20 @@ public final class ModulePasting {
                 blockData = Material.AIR.createBlockData();
             }
 
-            // Convert bedrock to stone (unless replacing a solid block)
+            // Collect bedrock positions for deferred async solidity check
             if (blockData.getMaterial().equals(Material.BEDROCK)) {
-                if (pasteLocation.getBlock().getType().isSolid()) return;
-                blockData = Material.STONE.createBlockData();
+                bedrockCandidates.add(new BedrockCandidate(pasteLocation));
+                return; // Deferred to async EditSession
             }
 
-            // Defer complex NBT blocks (dispensers, spawners, etc.) for post-processing via BaseBlock
+            // Defer complex NBT blocks (dispensers, spawners, etc.) — handled via BaseBlock in async EditSession
             if (isNbtRichMaterial(blockData.getMaterial())) {
-                nbtToPlace.add(new NbtPlacement(pasteLocation, baseBlock)); // keep full NBT
-                return; // do NOT add to normal paste list
+                nbtToPlace.add(new NbtPlacement(pasteLocation, baseBlock));
+                return;
             }
 
             // Normal placement path
-            pasteableList.add(new Pasteable(pasteLocation, blockData));
+            pasteableList.add(new Pasteable(pasteLocation, blockData, baseBlock));
         });
 
         return pasteableList;
@@ -285,6 +281,8 @@ public final class ModulePasting {
 
     public List<InterpretedSign> batchPaste(Deque<WFCNode> WFCNodeDeque, List<InterpretedSign> interpretedSigns) {
         List<Pasteable> pasteableList = new ArrayList<>();
+        List<BedrockCandidate> bedrockCandidates = new ArrayList<>();
+        List<NbtPlacement> nbtToPlace = new ArrayList<>();
 
         // Collect entity paste info while processing blocks
         List<EntityPasteInfo> entityPasteInfos = new ArrayList<>();
@@ -297,7 +295,7 @@ public final class ModulePasting {
 
             // Process blocks
             pasteableList.addAll(generatePasteMeList(clipboard, WFCNode.getRealLocation(startLocation),
-                    WFCNode.getModulesContainer().getRotation(), interpretedSigns));
+                    WFCNode.getModulesContainer().getRotation(), interpretedSigns, bedrockCandidates, nbtToPlace));
 
             // Store entity paste info for later - WITH TRANSFORMED CLIPBOARD
             AffineTransform transform = new AffineTransform().rotateY(normalizeRotation(WFCNode.getModulesContainer().getRotation()));
@@ -310,53 +308,73 @@ public final class ModulePasting {
             }
         }
 
-        List<Pasteable> slowBlocks = new ArrayList<>();
-        WorkloadRunnable pasteMeRunnable = new WorkloadRunnable(.1, () -> {
-            WorkloadRunnable vanillaPlacementRunnable = new WorkloadRunnable(.1, () -> {
+        // Switch to async thread for FAWE EditSession paste
+        final List<Pasteable> finalPasteableList = pasteableList;
+        final List<BedrockCandidate> finalBedrockCandidates = bedrockCandidates;
+        final List<NbtPlacement> finalNbtToPlace = nbtToPlace;
+
+        Bukkit.getScheduler().runTaskAsynchronously(MetadataHandler.PLUGIN, () -> {
+            try {
+                com.sk89q.worldedit.world.World adaptedWorld = BukkitAdapter.adapt(world);
+
+                try (EditSession editSession = WorldEdit.getInstance().newEditSession(adaptedWorld)) {
+                    editSession.setTrackingHistory(false);
+                    editSession.setSideEffectApplier(SideEffectSet.none());
+
+                    // Place normal blocks via BaseBlock (carries any block state data)
+                    for (Pasteable pasteable : finalPasteableList) {
+                        BlockVector3 pos = BlockVector3.at(
+                                pasteable.location.getBlockX(),
+                                pasteable.location.getBlockY(),
+                                pasteable.location.getBlockZ());
+                        try {
+                            editSession.setBlock(pos, pasteable.baseBlock);
+                        } catch (WorldEditException e) {
+                            Logger.warn("设置方块失败 " + pasteable.location + ": " + e.getMessage());
+                        }
+                    }
+
+                    // Place NBT-rich blocks (spawners, dispensers, etc.) via BaseBlock which carries NBT
+                    for (NbtPlacement np : finalNbtToPlace) {
+                        BlockVector3 pos = BlockVector3.at(
+                                np.location().getBlockX(),
+                                np.location().getBlockY(),
+                                np.location().getBlockZ());
+                        try {
+                            editSession.setBlock(pos, np.baseBlock());
+                        } catch (WorldEditException e) {
+                            Logger.warn("设置NBT方块失败 " + np.location() + ": " + e.getMessage());
+                        }
+                    }
+
+                    // Handle bedrock candidates: check solidity async via FAWE, replace non-solid with stone
+                    for (BedrockCandidate bc : finalBedrockCandidates) {
+                        BlockVector3 pos = BlockVector3.at(
+                                bc.location().getBlockX(),
+                                bc.location().getBlockY(),
+                                bc.location().getBlockZ());
+                        try {
+                            if (!editSession.getBlock(pos).getBlockType().getMaterial().isSolid()) {
+                                editSession.setBlock(pos, BukkitAdapter.adapt(Material.STONE.createBlockData()));
+                            }
+                        } catch (WorldEditException e) {
+                            Logger.warn("处理bedrock候选方块失败 " + bc.location() + ": " + e.getMessage());
+                        }
+                    }
+                } // EditSession auto-closes and flushes
+
+            } catch (Exception e) {
+                Logger.warn("FAWE 异步地牢粘贴失败: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            // Back to main thread for post-paste processing (entities, chests, etc.)
+            Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
                 postPasteProcessing(entityPasteInfos);
             });
-
-            for (Pasteable slowBlock : slowBlocks)
-                vanillaPlacementRunnable.addWorkload(() -> {
-                    slowBlock.location.getBlock().setBlockData(slowBlock.blockData, false);
-                });
-            vanillaPlacementRunnable.runTaskTimer(MetadataHandler.PLUGIN, 0, 1);
         });
 
-        List<InterpretedSign> freshlyInterpretedSigns = new ArrayList<>();
-
-        // Enable fast path only for world-based generation
-        final boolean fastPathEnabled = this.createModularWorld;
-
-        for (Pasteable pasteable : pasteableList) {
-            if (!fastPathEnabled) {
-                // Not world-based generation: force slow placement for EVERYTHING
-                slowBlocks.add(pasteable);
-                continue;
-            }
-
-            // World-based generation: keep original split between fast/slow
-            if (pasteable.blockData.getLightEmission() > 0
-                    || pasteable.blockData instanceof Directional
-                    || pasteable.blockData instanceof Rail
-                    || pasteable.blockData instanceof Sign) {
-                slowBlocks.add(pasteable);
-            } else {
-                pasteMeRunnable.addWorkload(() -> {
-                    NMSManager.getAdapter().setBlockInNativeDataPalette(
-                            pasteable.location.getWorld(),
-                            pasteable.location.getBlockX(),
-                            pasteable.location.getBlockY(),
-                            pasteable.location.getBlockZ(),
-                            pasteable.blockData,
-                            true);
-                });
-            }
-        }
-
-        pasteMeRunnable.runTaskTimer(MetadataHandler.PLUGIN, 0, 1);
-
-        return freshlyInterpretedSigns;
+        return new ArrayList<>();
     }
 
     private void postPasteProcessing(List<EntityPasteInfo> entityPasteInfos) {
@@ -365,31 +383,7 @@ public final class ModulePasting {
             modularWorld.spawnOtherEntities();
         }
 
-        // 1) Paste deferred NBT-rich blocks (dispenser, spawner, etc.) with WE so NBT is preserved
-        if (!nbtToPlace.isEmpty()) {
-            com.sk89q.worldedit.world.World adaptedWorld = BukkitAdapter.adapt(world);
-            try (EditSession editSession = WorldEdit.getInstance().newEditSession(adaptedWorld)) {
-                editSession.setTrackingHistory(false);
-                editSession.setSideEffectApplier(SideEffectSet.none());
-
-                for (NbtPlacement np : nbtToPlace) {
-                    BlockVector3 wp = BlockVector3.at(
-                            np.location().getBlockX(),
-                            np.location().getBlockY(),
-                            np.location().getBlockZ()
-                    );
-                    try {
-                        editSession.setBlock(wp, np.baseBlock()); // BaseBlock carries NBT
-                    } catch (WorldEditException e) {
-                        Logger.warn("设置NBT方块失败 " + np.location() + ": " + e.getMessage());
-                    }
-                }
-            } catch (Exception e) {
-                Logger.warn("NBT后粘贴会话失败: " + e.getMessage());
-            }
-        }
-
-        // 2) Paste entities from schematics (armor stands, etc.)
+        // Paste entities from schematics (armor stands, etc.)
         pasteArmorStandsForBatch(entityPasteInfos);
 
         for (ChestPlacement chestPlacement : chestsToPlace) {
@@ -413,7 +407,7 @@ public final class ModulePasting {
             }
         }
 
-        // 4) Spawn entities last
+        // Spawn entities last
         for (EntitySpawn entitySpawn : entitiesToSpawn) {
             try {
                 LivingEntity entity = (LivingEntity) world.spawnEntity(entitySpawn.location, entitySpawn.entityType);
@@ -440,6 +434,9 @@ public final class ModulePasting {
         modularWorld = new ModularWorld(world, worldFolder, interpretedSigns);
     }
 
+    private record BedrockCandidate(Location location) {
+    }
+
     private record NbtPlacement(Location location, BaseBlock baseBlock) {
     }
 
@@ -456,6 +453,6 @@ public final class ModulePasting {
     public record InterpretedSign(Location location, List<String> text) {
     }
 
-    private record Pasteable(Location location, BlockData blockData) {
+    private record Pasteable(Location location, BlockData blockData, BaseBlock baseBlock) {
     }
 }

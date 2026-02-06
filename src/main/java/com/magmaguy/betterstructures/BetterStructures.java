@@ -37,6 +37,14 @@ public final class BetterStructures extends JavaPlugin {
     @Override
     public void onEnable() {
         MetadataHandler.PLUGIN = this;
+
+        if (Bukkit.getPluginManager().getPlugin("FastAsyncWorldEdit") == null) {
+            Logger.warn("BetterStructures 需要 FastAsyncWorldEdit (FAWE)！");
+            Logger.warn("不支持原版 WorldEdit。请安装 FAWE。");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+
         Bukkit.getLogger().info("    ____       __  __            _____ __                  __                      ");
         Bukkit.getLogger().info("   / __ )___  / /_/ /____  _____/ ___// /________  _______/ /___  __________  _____");
         Bukkit.getLogger().info("  / __  / _ \\/ __/ __/ _ \\/ ___/\\__ \\/ __/ ___/ / / / ___/ __/ / / / ___/ _ \\/ ___/");

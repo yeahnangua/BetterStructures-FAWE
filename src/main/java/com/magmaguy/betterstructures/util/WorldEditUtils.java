@@ -6,7 +6,6 @@ import com.sk89q.jnbt.ListTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.entity.Entity;
@@ -15,20 +14,15 @@ import com.sk89q.worldedit.function.mask.BlockTypeMask;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldedit.regions.CuboidRegion;
-import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.util.SideEffectSet;
 import com.sk89q.worldedit.world.block.BaseBlock;
-import com.sk89q.worldedit.world.block.BlockState;
-import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 import org.checkerframework.checker.index.qual.Positive;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -132,77 +126,6 @@ public class WorldEditUtils {
         return null;
     }
 
-    public static Clipboard createSingleBlockClipboard(Location location, BaseBlock baseBlock, BlockState blockState) {
-        return new Clipboard() {
-            @Override
-            public <T extends BlockStateHolder<T>> boolean setBlock(BlockVector3 position, T block) throws WorldEditException {
-                return false;
-            }
-
-            @Nullable
-            @Override
-            public Operation commit() {
-                return null;
-            }
-
-            @Override
-            public BlockState getBlock(BlockVector3 position) {
-                return blockState;
-            }
-
-            @Override
-            public BaseBlock getFullBlock(BlockVector3 position) {
-                return baseBlock;
-            }
-
-            @Override
-            public BlockVector3 getMinimumPoint() {
-                return BlockVector3.at(0,0,0);
-            }
-
-            @Override
-            public BlockVector3 getMaximumPoint() {
-                return BlockVector3.at(0,0,0);
-            }
-
-            @Override
-            public List<? extends Entity> getEntities(Region region) {
-                return new ArrayList<>();
-            }
-
-            @Override
-            public List<? extends Entity> getEntities() {
-                return new ArrayList<>();
-            }
-
-            @Nullable
-            @Override
-            public Entity createEntity(com.sk89q.worldedit.util.Location location, BaseEntity entity) {
-                return null;
-            }
-
-            @Override
-            public Region getRegion() {
-                return new CuboidRegion(BlockVector3.at(0,0,0), BlockVector3.at(0,0,0));
-            }
-
-            @Override
-            public BlockVector3 getDimensions() {
-                return BlockVector3.at(1,1,1);
-            }
-
-            @Override
-            public BlockVector3 getOrigin() {
-                return BlockVector3.at(0,0,0);
-            }
-
-            @Override
-            public void setOrigin(BlockVector3 origin) {
-
-            }
-        };
-    }
-
     public static void pasteArmorStandsOnlyFromTransformed(Clipboard transformedClipboard, Location location) {
         com.sk89q.worldedit.world.World adaptedWorld = BukkitAdapter.adapt(location.getWorld());
 
@@ -232,7 +155,7 @@ public class WorldEditUtils {
                     .build();
 
             Operations.complete(operation);
-            
+
         } catch (Exception e) {
             Logger.warn("Failed to paste entities at " + location + ": " + e.getMessage());
         }
