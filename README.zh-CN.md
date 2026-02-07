@@ -5,6 +5,8 @@
 基于 [MagmaGuy/BetterStructures](https://github.com/MagmaGuy/BetterStructures) 的改进分支，针对 **Paper + FastAsyncWorldEdit (FAWE) + Terra** 生态做了深度适配与性能优化。
 
 > 原版插件: [GitHub](https://github.com/MagmaGuy/BetterStructures) | [Modrinth](https://modrinth.com/plugin/betterstructures)
+>
+> **下载本分支**: [Modrinth](https://modrinth.com/plugin/betterstructures-fawe) | [SpigotMC](https://www.spigotmc.org/resources/betterstructures-fawe.132404/)
 
 ---
 

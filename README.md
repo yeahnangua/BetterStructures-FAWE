@@ -5,6 +5,8 @@
 A performance-focused fork of [MagmaGuy/BetterStructures](https://github.com/MagmaGuy/BetterStructures), deeply adapted for the **Paper + FastAsyncWorldEdit (FAWE) + Terra** ecosystem.
 
 > Original plugin: [GitHub](https://github.com/MagmaGuy/BetterStructures) | [Modrinth](https://modrinth.com/plugin/betterstructures)
+>
+> **Download this fork**: [Modrinth](https://modrinth.com/plugin/betterstructures-fawe) | [SpigotMC](https://www.spigotmc.org/resources/betterstructures-fawe.132404/)
 
 ---
 
