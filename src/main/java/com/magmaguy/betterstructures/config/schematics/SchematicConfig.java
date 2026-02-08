@@ -66,6 +66,10 @@ public class SchematicConfig extends CustomConfig {
             schematicConfigurations.put(configurationName, schematicConfigField);
         }
 
+        // Step 3: Create SchematicContainer instances in parallel
+        // Each container scans its clipboard (triple-nested loop) which benefits from parallelism
+        record ContainerTask(Clipboard clipboard, String schematicFilename, SchematicConfigField configField) {}
+        List<ContainerTask> containerTasks = new ArrayList<>();
         for (SchematicConfigField schematicConfigField : schematicConfigurations.values()) {
             if (!schematicConfigField.isEnabled()) continue;
             String schematicFilename = convertFromConfigurationFilename(schematicConfigField.getFilename());
@@ -75,12 +79,16 @@ public class SchematicConfig extends CustomConfig {
                     clipboard = clipboards.get(file);
                     break;
                 }
-            new SchematicContainer(
-                    clipboard,
-                    schematicFilename,
-                    schematicConfigField,
-                    schematicConfigField.getFilename());
+            if (clipboard != null) {
+                containerTasks.add(new ContainerTask(clipboard, schematicFilename, schematicConfigField));
+            }
         }
+        containerTasks.parallelStream().forEach(task ->
+                new SchematicContainer(
+                        task.clipboard(),
+                        task.schematicFilename(),
+                        task.configField(),
+                        task.configField().getFilename()));
 
     }
 

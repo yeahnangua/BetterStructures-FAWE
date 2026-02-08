@@ -5,13 +5,12 @@ import com.magmaguy.betterstructures.config.generators.GeneratorConfig;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import com.magmaguy.betterstructures.config.treasures.TreasureConfig;
 import com.magmaguy.betterstructures.config.treasures.TreasureConfigFields;
+import com.magmaguy.betterstructures.util.AsyncConfigSaver;
 import com.magmaguy.magmacore.config.CustomConfigFields;
 import com.magmaguy.magmacore.util.Logger;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Material;
-
-import java.io.IOException;
 
 public class SchematicConfigField extends CustomConfigFields {
 
@@ -71,10 +70,6 @@ public class SchematicConfigField extends CustomConfigFields {
     public void toggleEnabled(boolean enabled) {
         this.isEnabled = enabled;
         fileConfiguration.set("isEnabled", enabled);
-        try {
-            fileConfiguration.save(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        AsyncConfigSaver.saveAsync(fileConfiguration, file);
     }
 }

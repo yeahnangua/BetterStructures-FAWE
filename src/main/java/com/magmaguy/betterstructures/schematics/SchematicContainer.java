@@ -144,7 +144,9 @@ public class SchematicContainer {
             chestContents = schematicConfigField.getChestContents();
         }
         if (valid)
-            generatorConfigFields.getStructureTypes().forEach(structureType -> schematics.put(structureType, this));
+            synchronized (schematics) {
+                generatorConfigFields.getStructureTypes().forEach(structureType -> schematics.put(structureType, this));
+            }
     }
 
     public static void shutdown() {

@@ -349,11 +349,6 @@ public class WFCNode {
 
                 ModulePasting.paste(modulesContainer.getClipboard(), startLocation, modulesContainer.getRotation());
             }
-        }.runTask(MetadataHandler.PLUGIN);
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        }.runTaskLater(MetadataHandler.PLUGIN, 1L);
     }
 }

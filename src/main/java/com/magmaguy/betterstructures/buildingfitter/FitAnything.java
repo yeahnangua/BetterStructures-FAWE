@@ -1,5 +1,6 @@
 package com.magmaguy.betterstructures.buildingfitter;
 
+import com.magmaguy.betterstructures.MetadataHandler;
 import com.magmaguy.betterstructures.api.BuildPlaceEvent;
 import com.magmaguy.betterstructures.api.ChestFillEvent;
 import com.magmaguy.betterstructures.buildingfitter.util.FitUndergroundDeepBuilding;
@@ -103,42 +104,53 @@ public class FitAnything {
     }
 
     protected void paste(Location location) {
-        BuildPlaceEvent buildPlaceEvent = new BuildPlaceEvent(this);
-        Bukkit.getServer().getPluginManager().callEvent(buildPlaceEvent);
-        if (buildPlaceEvent.isCancelled()) return;
+        // Ensure paste runs on main thread since BuildPlaceEvent must fire on main thread
+        // and this method may be called from async terrain scanning
+        Runnable pasteLogic = () -> {
+            BuildPlaceEvent buildPlaceEvent = new BuildPlaceEvent(this);
+            Bukkit.getServer().getPluginManager().callEvent(buildPlaceEvent);
+            if (buildPlaceEvent.isCancelled()) return;
 
-        FitAnything fitAnything = this;
+            FitAnything fitAnything = this;
 
-        // Create prePasteCallback that runs AFTER chunks are ready but BEFORE paste
-        // This ensures assignPedestalMaterial can safely access world blocks
-        Runnable prePasteCallback = () -> {
-            // Set pedestal material - now safe because chunks are generated
-            assignPedestalMaterial(location);
-            if (pedestalMaterial == null)
-                switch (location.getWorld().getEnvironment()) {
-                    case NETHER:
-                        pedestalMaterial = Material.NETHERRACK;
-                        break;
-                    case THE_END:
-                        pedestalMaterial = Material.END_STONE;
-                        break;
-                    default:
-                        pedestalMaterial = Material.STONE;
-                }
+            // Create prePasteCallback that runs AFTER chunks are ready but BEFORE paste
+            // This ensures assignPedestalMaterial can safely access world blocks
+            Runnable prePasteCallback = () -> {
+                // Set pedestal material - now safe because chunks are generated
+                assignPedestalMaterial(location);
+                if (pedestalMaterial == null)
+                    switch (location.getWorld().getEnvironment()) {
+                        case NETHER:
+                            pedestalMaterial = Material.NETHERRACK;
+                            break;
+                        case THE_END:
+                            pedestalMaterial = Material.END_STONE;
+                            break;
+                        default:
+                            pedestalMaterial = Material.STONE;
+                    }
+            };
+
+            // Create a function to provide pedestal material
+            Function<Boolean, Material> pedestalMaterialProvider = this::getPedestalMaterial;
+
+            // Paste the schematic with chunk-safe callback
+            Schematic.pasteSchematic(
+                    schematicClipboard,
+                    location,
+                    schematicOffset,
+                    prePasteCallback,
+                    pedestalMaterialProvider,
+                    onPasteComplete(fitAnything, location)
+            );
         };
 
-        // Create a function to provide pedestal material
-        Function<Boolean, Material> pedestalMaterialProvider = this::getPedestalMaterial;
-
-        // Paste the schematic with chunk-safe callback
-        Schematic.pasteSchematic(
-                schematicClipboard,
-                location,
-                schematicOffset,
-                prePasteCallback,
-                pedestalMaterialProvider,
-                onPasteComplete(fitAnything, location)
-        );
+        // If already on main thread, run directly; otherwise schedule to main thread
+        if (Bukkit.isPrimaryThread()) {
+            pasteLogic.run();
+        } else {
+            Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, pasteLogic);
+        }
     }
 
     private BukkitRunnable onPasteComplete(FitAnything fitAnything, Location location) {

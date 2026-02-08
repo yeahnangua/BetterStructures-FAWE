@@ -3,13 +3,13 @@ package com.magmaguy.betterstructures.config.modules;
 import com.magmaguy.betterstructures.chests.ChestContents;
 import com.magmaguy.betterstructures.config.treasures.TreasureConfig;
 import com.magmaguy.betterstructures.config.treasures.TreasureConfigFields;
+import com.magmaguy.betterstructures.util.AsyncConfigSaver;
 import com.magmaguy.magmacore.config.CustomConfigFields;
 import com.magmaguy.magmacore.util.Logger;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.block.Biome;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -189,10 +189,6 @@ public class ModulesConfigFields extends CustomConfigFields {
         fileConfiguration.set("westIsPassable", null);
         fileConfiguration.set("upIsPassable", null);
         fileConfiguration.set("downIsPassable", null);
-        try {
-            fileConfiguration.save(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        AsyncConfigSaver.saveAsync(fileConfiguration, file);
     }
 }

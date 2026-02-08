@@ -15,6 +15,7 @@ import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsCon
 import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsConfigFields;
 import com.magmaguy.betterstructures.modules.WFCGenerator;
 import com.magmaguy.betterstructures.schematics.SchematicContainer;
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
@@ -105,8 +106,18 @@ public class NewChunkLoadEvent implements Listener {
                     // Max retries reached, proceed anyway to avoid stuck structures
                 }
 
-                runScanners(chunk);
-                markChunkProcessed(chunk);
+                // Run terrain scanning asynchronously to avoid blocking the main thread.
+                // All scan operations (getBlock, getHighestBlockAt, etc.) are read-only
+                // and safe to call from async threads on Paper servers.
+                Bukkit.getScheduler().runTaskAsynchronously(MetadataHandler.PLUGIN, () -> {
+                    runScanners(chunk);
+                    // markChunkProcessed writes to PersistentDataContainer, must be on main thread
+                    Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
+                        if (chunk.isLoaded()) {
+                            markChunkProcessed(chunk);
+                        }
+                    });
+                });
             }
         }.runTaskLater(MetadataHandler.PLUGIN, finalDelayTicks);
     }
@@ -122,7 +133,9 @@ public class NewChunkLoadEvent implements Listener {
         deepUndergroundScanner(chunk);
         skyScanner(chunk);
         liquidSurfaceScanner(chunk);
-        dungeonScanner(chunk);
+        // WFCGenerator constructor is not async-safe (BossBar creation, non-thread-safe HashSet),
+        // so dungeonScanner must run on the main thread
+        Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> dungeonScanner(chunk));
     }
 
     /**
@@ -224,7 +237,7 @@ public class NewChunkLoadEvent implements Listener {
             validatedGenerators.add(moduleGeneratorsConfigFields);
         }
         if (validatedGenerators.isEmpty()) return;
-        ModuleGeneratorsConfigFields moduleGeneratorsConfigFields = validatedGenerators.get(ThreadLocalRandom.current().nextInt(0, ModuleGeneratorsConfig.getModuleGenerators().size()));
+        ModuleGeneratorsConfigFields moduleGeneratorsConfigFields = validatedGenerators.get(ThreadLocalRandom.current().nextInt(validatedGenerators.size()));
         new WFCGenerator(moduleGeneratorsConfigFields, chunk.getBlock(8,moduleGeneratorsConfigFields.getCenterModuleAltitude(),8).getLocation());
     }
 }
