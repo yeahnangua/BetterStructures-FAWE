@@ -2,6 +2,21 @@
 
 All notable changes to BetterStructures-FAWE will be documented in this file.
 
+## [2.1.2-FAWE.2]
+
+### Changed
+
+- **Async terrain scanning (P0)**: Moved `runScanners()` in `NewChunkLoadEvent` from synchronous `runTaskLater` to `runTaskAsynchronously`. All terrain fitness scanning (`Topology.scan()`, `TerrainAdequacy.scan()`, `getBlock()`, `getHighestBlockAt()`) now runs off the main thread, eliminating TPS impact during chunk exploration. `markChunkProcessed()` is dispatched back to the main thread for safe `PersistentDataContainer` writes.
+- **Thread-safe paste dispatch (P0)**: `FitAnything.paste()` now detects whether it is called from the main thread or an async thread, and automatically schedules `BuildPlaceEvent` and `Schematic.pasteSchematic()` to the main thread when needed.
+- **Parallel SchematicContainer initialization (P1)**: `SchematicContainer` creation (triple-nested clipboard scanning for chests, signs, spawns) now runs via `parallelStream()` during startup, with `synchronized` protection on the shared `schematics` multimap.
+- **Async config file saving (P2)**: New `AsyncConfigSaver` utility snapshots `FileConfiguration` via `saveToString()` on the calling thread, then writes to disk asynchronously. Applied to `SchematicConfigField.toggleEnabled()` and `ModulesConfigFields.validateClones()`.
+- **Non-blocking WFC debug paste (P3)**: Replaced `Thread.sleep(50)` in `WFCNode.debugPaste()` with `runTaskLater(1L)`, eliminating async thread blocking during WFC debug visualization.
+- **dungeonScanner dispatched to main thread**: `WFCGenerator` constructor is not async-safe (`BossBar`, non-thread-safe `HashSet`), so `dungeonScanner` is now explicitly scheduled back to the main thread from the async scan pipeline.
+
+### Fixed
+
+- **dungeonScanner IndexOutOfBoundsException**: Fixed pre-existing bug where `ThreadLocalRandom.nextInt()` used `ModuleGeneratorsConfig.getModuleGenerators().size()` as the upper bound instead of the filtered `validatedGenerators.size()`, causing potential `IndexOutOfBoundsException` when some generators are filtered out by world/environment checks.
+
 ## [2.1.2-FAWE.1]
 
 Based on upstream BetterStructures 2.1.2. All changes below are relative to the original release.
