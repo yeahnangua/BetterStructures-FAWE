@@ -2,6 +2,12 @@
 
 All notable changes to BetterStructures-FAWE will be documented in this file.
 
+## [2.1.2-FAWE.3]
+
+### Added
+
+- **结构信息查询命令**: 新增 `/bs info` 命令，玩家站在已生成的结构范围内时可查看该结构的详细信息，包括建筑模板名称、结构类型、坐标、范围、怪物状态、创建时间等。
+
 ## [2.1.2-FAWE.2]
 
 ### Changed
