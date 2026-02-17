@@ -374,10 +374,33 @@ public class FitAnything {
             //If mobs spawn in corners they might choke on adjacent walls
             signLocation.add(new Vector(0.5, 0, 0.5));
             EntityType entityType = schematicContainer.getVanillaSpawns().get(entityPosition);
-            Entity entity = signLocation.getWorld().spawnEntity(signLocation, entityType);
-            entity.setPersistent(true);
-            if (entity instanceof LivingEntity) {
-                ((LivingEntity) entity).setRemoveWhenFarAway(false);
+
+            // MythicMobs override: try to replace vanilla mob with MM equivalent
+            Entity entity = null;
+            MobSpawnConfig.MobType trackingType = MobSpawnConfig.MobType.VANILLA;
+            String trackingIdentifier = entityType.name();
+
+            if (MythicMobs.isOverrideActive() && DefaultConfig.isMmOverrideReplaceVanillaMobs()) {
+                String mmMobId = MythicMobs.getRandomMobByType(entityType);
+                if (mmMobId != null) {
+                    entity = MythicMobs.spawnAndReturn(signLocation, mmMobId + ":1");
+                    if (entity != null) {
+                        trackingType = MobSpawnConfig.MobType.VANILLA_MM_OVERRIDE;
+                        // Store original EntityType name as identifier for re-selection on respawn
+                        trackingIdentifier = entityType.name();
+                    }
+                }
+            }
+
+            // Fallback to vanilla spawning if MM override didn't work
+            if (entity == null) {
+                entity = signLocation.getWorld().spawnEntity(signLocation, entityType);
+                entity.setPersistent(true);
+                if (entity instanceof LivingEntity) {
+                    ((LivingEntity) entity).setRemoveWhenFarAway(false);
+                }
+                trackingType = MobSpawnConfig.MobType.VANILLA;
+                trackingIdentifier = entityType.name();
             }
 
             if (!VersionChecker.serverVersionOlderThan(21, 0) &&
@@ -387,13 +410,12 @@ public class FitAnything {
             }
 
             // Track mob for respawning (only LivingEntities)
-            // Store the actual spawn location relative to structure origin (includes schematicOffset)
             if (entity instanceof LivingEntity && DefaultConfig.isMobTrackingEnabled()) {
                 Vector actualOffset = schematicOffset.clone().add(entityPosition);
                 spawnedMobUUIDs.add(entity.getUniqueId());
                 mobSpawnConfigs.add(new MobSpawnConfig(
-                        MobSpawnConfig.MobType.VANILLA,
-                        entityType.name(),
+                        trackingType,
+                        trackingIdentifier,
                         actualOffset.getX(),
                         actualOffset.getY(),
                         actualOffset.getZ()
@@ -412,34 +434,58 @@ public class FitAnything {
             eliteLocation.add(new Vector(0.5, 0, 0.5));
             String bossFilename = schematicContainer.getEliteMobsSpawns().get(elitePosition);
 
-            // Use spawnAndReturn to get the entity
-            Entity eliteMob = EliteMobs.spawnAndReturn(eliteLocation, bossFilename);
-            if (eliteMob == null) return;
+            Entity eliteMob = null;
+            MobSpawnConfig.MobType trackingType = MobSpawnConfig.MobType.ELITEMOBS;
+            String trackingIdentifier = bossFilename;
 
-            // Track mob (EliteMobs only for state tracking, not respawning)
-            // Store actual offset including schematicOffset
+            // MythicMobs override: try to replace EM boss with MM boss
+            if (MythicMobs.isOverrideActive() && DefaultConfig.isMmOverrideReplaceEliteMobsBosses()) {
+                String mmBossId = MythicMobs.getRandomBoss();
+                if (mmBossId != null) {
+                    eliteMob = MythicMobs.spawnAndReturn(eliteLocation, mmBossId + ":1");
+                    if (eliteMob != null) {
+                        trackingType = MobSpawnConfig.MobType.ELITEMOBS_MM_OVERRIDE;
+                        trackingIdentifier = mmBossId;
+                    }
+                } else {
+                    Logger.warn("MythicMobs Boss 列表为空！无法替换 EliteMobs Boss: " + bossFilename);
+                }
+            }
+
+            // Fallback to original EliteMobs spawning
+            if (eliteMob == null) {
+                eliteMob = EliteMobs.spawnAndReturn(eliteLocation, bossFilename);
+                if (eliteMob == null) return;
+                trackingType = MobSpawnConfig.MobType.ELITEMOBS;
+                trackingIdentifier = bossFilename;
+            }
+
+            // Track mob
             if (DefaultConfig.isMobTrackingEnabled()) {
                 Vector actualOffset = schematicOffset.clone().add(elitePosition);
                 spawnedMobUUIDs.add(eliteMob.getUniqueId());
                 mobSpawnConfigs.add(new MobSpawnConfig(
-                        MobSpawnConfig.MobType.ELITEMOBS,
-                        bossFilename,
+                        trackingType,
+                        trackingIdentifier,
                         actualOffset.getX(),
                         actualOffset.getY(),
                         actualOffset.getZ()
                 ));
             }
 
-            Location lowestCorner = location.clone().add(schematicOffset);
-            Location highestCorner = lowestCorner.clone().add(new Vector(schematicClipboard.getRegion().getWidth() - 1, schematicClipboard.getRegion().getHeight(), schematicClipboard.getRegion().getLength() - 1));
-            if (DefaultConfig.isProtectEliteMobsRegions() &&
-                    Bukkit.getPluginManager().getPlugin("WorldGuard") != null &&
-                    Bukkit.getPluginManager().getPlugin("EliteMobs") != null) {
-                WorldGuard.Protect(lowestCorner, highestCorner, bossFilename, eliteLocation);
-            } else {
-                if (!worldGuardWarn) {
-                    worldGuardWarn = true;
-                    Logger.warn("你未使用 WorldGuard，因此 BetterStructures 无法保护Boss竞技场！建议使用 WorldGuard 以保证公平的战斗体验。");
+            // Only set up WorldGuard protection for original EliteMobs bosses (not MM overrides)
+            if (trackingType == MobSpawnConfig.MobType.ELITEMOBS) {
+                Location lowestCorner = location.clone().add(schematicOffset);
+                Location highestCorner = lowestCorner.clone().add(new Vector(schematicClipboard.getRegion().getWidth() - 1, schematicClipboard.getRegion().getHeight(), schematicClipboard.getRegion().getLength() - 1));
+                if (DefaultConfig.isProtectEliteMobsRegions() &&
+                        Bukkit.getPluginManager().getPlugin("WorldGuard") != null &&
+                        Bukkit.getPluginManager().getPlugin("EliteMobs") != null) {
+                    WorldGuard.Protect(lowestCorner, highestCorner, bossFilename, eliteLocation);
+                } else {
+                    if (!worldGuardWarn) {
+                        worldGuardWarn = true;
+                        Logger.warn("你未使用 WorldGuard，因此 BetterStructures 无法保护Boss竞技场！建议使用 WorldGuard 以保证公平的战斗体验。");
+                    }
                 }
             }
         }
@@ -480,6 +526,9 @@ public class FitAnything {
 
             if (structureData != null) {
                 MobTrackingManager.getInstance().registerStructureMobs(structureData, spawnedMobUUIDs, mobSpawnConfigs);
+                // Set boss structure flag
+                structureData.setBossStructure(schematicContainer.isBossStructure());
+                StructureLocationManager.getInstance().markDirty(location.getWorld().getName());
             }
         }
     }
