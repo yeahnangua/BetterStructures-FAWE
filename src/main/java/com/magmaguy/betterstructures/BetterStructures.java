@@ -20,6 +20,7 @@ import com.magmaguy.betterstructures.modules.ModulesContainer;
 import com.magmaguy.betterstructures.modules.WFCGenerator;
 import com.magmaguy.betterstructures.schematics.SchematicContainer;
 import com.magmaguy.betterstructures.structurelocation.StructureLocationManager;
+import com.magmaguy.betterstructures.thirdparty.MythicMobs;
 import com.magmaguy.betterstructures.thirdparty.WorldGuard;
 import com.magmaguy.easyminecraftgoals.NMSManager;
 import com.magmaguy.magmacore.MagmaCore;
@@ -92,6 +93,11 @@ public final class BetterStructures extends JavaPlugin {
             Logger.info("生物追踪系统已启用。");
         }
 
+        // Initialize MythicMobs override type mapping cache
+        if (DefaultConfig.isMythicMobsOverrideEnabled()) {
+            MythicMobs.buildTypeMapping();
+        }
+
         CommandManager commandManager = new CommandManager(this, "betterstructures");
         commandManager.registerCommand(new LootifyCommand());
         commandManager.registerCommand(new PlaceCommand());
@@ -133,6 +139,7 @@ public final class BetterStructures extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        MythicMobs.clearCache();
         MobTrackingManager.shutdown();
         StructureLocationManager.getInstance().shutdown();
         SchematicContainer.shutdown();
