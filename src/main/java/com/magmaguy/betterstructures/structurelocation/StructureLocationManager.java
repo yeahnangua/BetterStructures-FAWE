@@ -185,6 +185,7 @@ public class StructureLocationManager {
             long clearedTimestamp = locationSection.getLong("clearedTimestamp", 0);
             int respawnCount = locationSection.getInt("respawnCount", 0);
             long createdTimestamp = locationSection.getLong("createdTimestamp", System.currentTimeMillis());
+            boolean bossStructure = locationSection.getBoolean("bossStructure", false);
 
             // Load mob spawn configs
             List<MobSpawnConfig> mobSpawnConfigs = new ArrayList<>();
@@ -219,7 +220,7 @@ public class StructureLocationManager {
                     x, y, z, worldName, schematic, type,
                     radiusX, radiusY, radiusZ,
                     cleared, clearedTimestamp, respawnCount,
-                    mobSpawnConfigs, killedSpawnIndices, createdTimestamp
+                    mobSpawnConfigs, killedSpawnIndices, createdTimestamp, bossStructure
             );
 
             worldLocations.put(key, data);
@@ -288,6 +289,7 @@ public class StructureLocationManager {
             config.set(path + ".clearedTimestamp", data.getClearedTimestamp());
             config.set(path + ".respawnCount", data.getRespawnCount());
             config.set(path + ".createdTimestamp", data.getCreatedTimestamp());
+            config.set(path + ".bossStructure", data.isBossStructure());
 
             // Save mob spawn configs
             if (!data.getMobSpawnConfigs().isEmpty()) {

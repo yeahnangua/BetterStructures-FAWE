@@ -36,6 +36,7 @@ public class StructureLocationData {
 
     // Metadata
     private final long createdTimestamp;
+    private boolean bossStructure;
 
     /**
      * Constructor for new structures (when generating).
@@ -58,6 +59,7 @@ public class StructureLocationData {
         this.mobSpawnConfigs = new ArrayList<>();
         this.killedSpawnIndices = ConcurrentHashMap.newKeySet();
         this.createdTimestamp = System.currentTimeMillis();
+        this.bossStructure = false;
     }
 
     /**
@@ -67,7 +69,7 @@ public class StructureLocationData {
                                   StructureType structureType, int radiusX, int radiusY, int radiusZ,
                                   boolean cleared, long clearedTimestamp, int respawnCount,
                                   List<MobSpawnConfig> mobSpawnConfigs, Set<Integer> killedSpawnIndices,
-                                  long createdTimestamp) {
+                                  long createdTimestamp, boolean bossStructure) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -87,6 +89,7 @@ public class StructureLocationData {
             this.killedSpawnIndices.addAll(killedSpawnIndices);
         }
         this.createdTimestamp = createdTimestamp;
+        this.bossStructure = bossStructure;
     }
 
     /**
@@ -203,6 +206,14 @@ public class StructureLocationData {
 
     public long getCreatedTimestamp() {
         return createdTimestamp;
+    }
+
+    public boolean isBossStructure() {
+        return bossStructure;
+    }
+
+    public void setBossStructure(boolean bossStructure) {
+        this.bossStructure = bossStructure;
     }
 
     /**
