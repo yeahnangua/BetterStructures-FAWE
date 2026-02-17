@@ -2,6 +2,19 @@
 
 All notable changes to BetterStructures-FAWE will be documented in this file.
 
+## [2.1.2-FAWE.4]
+
+### Added
+
+- **MythicMobs 覆盖系统**: 新增 MythicMobs 集成功能，当结构放置时自动将原版生物和 EliteMobs Boss 替换为 MythicMobs 等价生物。
+  - 原版生物（`[spawn]` 告示牌）可自动替换为具有相同基础类型的 MythicMobs 生物（如所有 Type: ZOMBIE 的 MM 生物替换原版僵尸）。
+  - EliteMobs Boss（`[elitemobs]` 告示牌）可替换为配置列表中的随机 MythicMobs Boss。
+  - 新增 `MobType` 枚举值 `VANILLA_MM_OVERRIDE`（重生时重新随机选择）和 `ELITEMOBS_MM_OVERRIDE`（不重生）。
+  - 插件启动时自动构建类型映射缓存，查询所有已注册 MythicMobs 并按 Bukkit EntityType 分组。
+  - 新增配置项：`mythicMobsOverride.enabled`、`mythicMobsOverride.replaceVanillaMobs`、`mythicMobsOverride.replaceEliteMobsBosses`、`mythicMobsOverride.mythicBossList`。
+  - 默认关闭，需手动启用并安装 MythicMobs 插件。
+- **Boss 结构标记**: 结构数据新增 `bossStructure` 字段，自动检测包含 EliteMobs 刷怪点或 MythicMobs Boss 的结构，并持久化存储。`/bs info` 命令现显示 Boss 结构状态。
+
 ## [2.1.2-FAWE.3]
 
 ### Added
