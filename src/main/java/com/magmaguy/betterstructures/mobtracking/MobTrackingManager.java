@@ -384,6 +384,40 @@ public class MobTrackingManager {
                     spawnedMob = MythicMobs.spawnAndReturn(spawnLoc, config.getMobIdentifier());
                     break;
 
+                case VANILLA_MM_OVERRIDE:
+                    // Re-select a random MM mob for this vanilla entity type
+                    spawnLoc.getBlock().setBlockData(Material.AIR.createBlockData(), false);
+                    spawnLoc.add(new Vector(0.5, 0, 0.5));
+                    if (MythicMobs.isOverrideActive()) {
+                        try {
+                            EntityType originalType = EntityType.valueOf(config.getMobIdentifier());
+                            String mmMobId = MythicMobs.getRandomMobByType(originalType);
+                            if (mmMobId != null) {
+                                spawnedMob = MythicMobs.spawnAndReturn(spawnLoc, mmMobId + ":1");
+                            }
+                        } catch (IllegalArgumentException e) {
+                            Logger.warn("重生覆盖生物失败，无法识别原始类型: " + config.getMobIdentifier());
+                        }
+                    }
+                    // Fallback to vanilla if MM override fails
+                    if (spawnedMob == null) {
+                        try {
+                            EntityType entityType = EntityType.valueOf(config.getMobIdentifier());
+                            spawnedMob = world.spawnEntity(spawnLoc, entityType);
+                            if (spawnedMob instanceof LivingEntity) {
+                                ((LivingEntity) spawnedMob).setRemoveWhenFarAway(false);
+                            }
+                            spawnedMob.setPersistent(true);
+                        } catch (IllegalArgumentException e) {
+                            Logger.warn("重生原版生物失败: " + config.getMobIdentifier());
+                        }
+                    }
+                    break;
+
+                case ELITEMOBS_MM_OVERRIDE:
+                    // EM boss overrides do not respawn (same as ELITEMOBS)
+                    break;
+
                 case ELITEMOBS:
                     // EliteMobs handles its own persistence, skip respawn
                     break;
