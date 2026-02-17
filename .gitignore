@@ -32,6 +32,9 @@ testbed/
 .omc/
 CLAUDE.md
 
+# Git worktrees
+.worktrees/
+
 # Temporary files
 *.log
 *.tmp
