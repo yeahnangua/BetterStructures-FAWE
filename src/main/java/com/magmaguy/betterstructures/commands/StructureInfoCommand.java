@@ -60,6 +60,7 @@ public class StructureInfoCommand extends AdvancedCommand {
             Logger.sendMessage(player, "&6清除时间: &f" + sdf.format(new Date(found.getClearedTimestamp())));
         }
         Logger.sendMessage(player, "&6重生次数: &f" + found.getRespawnCount());
+        Logger.sendMessage(player, "&6Boss 结构: &f" + (found.isBossStructure() ? "是" : "否"));
         Logger.sendMessage(player, "&6怪物配置数: &f" + found.getTotalMobCount());
         Logger.sendMessage(player, "&6存活怪物数: &f" + found.getAliveMobCount());
         Logger.sendMessage(player, "&6创建时间: &f" + sdf.format(new Date(found.getCreatedTimestamp())));
