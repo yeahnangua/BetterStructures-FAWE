@@ -98,6 +98,16 @@ public class DefaultConfig extends ConfigurationFile {
     @Getter
     private static boolean validateChunkBeforePaste;
 
+    // MythicMobs override configuration
+    @Getter
+    private static boolean mythicMobsOverrideEnabled;
+    @Getter
+    private static boolean mmOverrideReplaceVanillaMobs;
+    @Getter
+    private static boolean mmOverrideReplaceEliteMobsBosses;
+    @Getter
+    private static List<String> mythicBossList;
+
     public DefaultConfig() {
         super("config.yml");
         instance = this;
@@ -279,6 +289,37 @@ public class DefaultConfig extends ConfigurationFile {
                         "Prevents structures from being placed on incomplete terrain.",
                         "Disable only if experiencing performance issues."),
                 fileConfiguration, "terraCompatibility.validateChunkBeforePaste", true);
+
+        // MythicMobs override configuration
+        mythicMobsOverrideEnabled = ConfigurationEngine.setBoolean(
+                List.of(
+                        "Enable MythicMobs override system.",
+                        "When enabled, vanilla mobs in structures will be replaced with MythicMobs equivalents,",
+                        "and EliteMobs bosses will be replaced with MythicMobs bosses.",
+                        "Requires MythicMobs plugin to be installed."),
+                fileConfiguration, "mythicMobsOverride.enabled", false);
+
+        mmOverrideReplaceVanillaMobs = ConfigurationEngine.setBoolean(
+                List.of(
+                        "Replace vanilla mobs (from [spawn] signs) with MythicMobs equivalents.",
+                        "BS auto-maps vanilla entity types to MM mobs with the same base type.",
+                        "For example, all MM mobs with Type: ZOMBIE will replace vanilla zombies."),
+                fileConfiguration, "mythicMobsOverride.replaceVanillaMobs", true);
+
+        mmOverrideReplaceEliteMobsBosses = ConfigurationEngine.setBoolean(
+                List.of(
+                        "Replace EliteMobs bosses (from [elitemobs] signs) with MythicMobs bosses.",
+                        "EM bosses will be randomly replaced with a boss from the mythicBossList below."),
+                fileConfiguration, "mythicMobsOverride.replaceEliteMobsBosses", true);
+
+        mythicBossList = ConfigurationEngine.setList(
+                List.of(
+                        "List of MythicMobs mob IDs that are considered bosses.",
+                        "Feature 1 (vanilla replace): these mobs are EXCLUDED from the vanilla replacement pool.",
+                        "Feature 2 (EM boss replace): EM bosses are randomly replaced with one from this list.",
+                        "Example: DragonLord, SkeletonKing, ZombieOverlord"),
+                fileConfiguration, "mythicMobsOverride.mythicBossList",
+                List.of("ExampleBoss1", "ExampleBoss2"));
 
         ConfigurationEngine.fileSaverOnlyDefaults(fileConfiguration, file);
     }
