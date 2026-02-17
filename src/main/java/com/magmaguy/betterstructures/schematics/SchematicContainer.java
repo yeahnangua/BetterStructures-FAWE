@@ -2,6 +2,7 @@ package com.magmaguy.betterstructures.schematics;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.magmaguy.betterstructures.chests.ChestContents;
+import com.magmaguy.betterstructures.config.DefaultConfig;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import com.magmaguy.betterstructures.config.schematics.SchematicConfigField;
 import com.magmaguy.betterstructures.config.treasures.TreasureConfig;
@@ -248,5 +249,32 @@ public class SchematicContainer {
         return generatorConfigFields.getValidWorlds() == null ||
                 generatorConfigFields.getValidWorlds().isEmpty() ||
                 generatorConfigFields.getValidWorlds().contains(worldName);
+    }
+
+    /**
+     * Determines if this schematic represents a boss structure.
+     * A structure is a boss structure if:
+     * - It has EliteMobs spawns ([elitemobs] signs), OR
+     * - Any of its MythicMobs spawns reference a mob in the mythicBossList config
+     */
+    public boolean isBossStructure() {
+        // Has EliteMobs bosses = boss structure
+        if (!eliteMobsSpawns.isEmpty()) {
+            return true;
+        }
+
+        // Check if any MythicMobs spawns are in the boss list
+        List<String> bossList = DefaultConfig.getMythicBossList();
+        if (bossList != null && !bossList.isEmpty()) {
+            for (String mmSpawn : mythicMobsSpawns.values()) {
+                // MM spawn format is "MobID[:level]", extract just the MobID
+                String mobId = mmSpawn.split(":")[0];
+                if (bossList.contains(mobId)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
