@@ -9,7 +9,9 @@ public class MobSpawnConfig {
     public enum MobType {
         VANILLA,
         ELITEMOBS,
-        MYTHICMOBS
+        MYTHICMOBS,
+        VANILLA_MM_OVERRIDE,      // Vanilla mob replaced with MM mob (respawns with random re-selection)
+        ELITEMOBS_MM_OVERRIDE     // EM boss replaced with MM boss (does not respawn)
     }
 
     private final MobType mobType;
@@ -51,6 +53,6 @@ public class MobSpawnConfig {
      * EliteMobs has its own persistence mechanism, so we only track state.
      */
     public boolean shouldRespawn() {
-        return mobType != MobType.ELITEMOBS;
+        return mobType != MobType.ELITEMOBS && mobType != MobType.ELITEMOBS_MM_OVERRIDE;
     }
 }
