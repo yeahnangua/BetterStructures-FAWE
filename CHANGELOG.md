@@ -2,6 +2,12 @@
 
 All notable changes to BetterStructures-FAWE will be documented in this file.
 
+## [2.1.2-FAWE.6]
+
+### Added
+
+- **实体类型白名单**: 新增 `mythicMobsOverride.entityTypeWhitelist.enabled` 开关和 `mythicMobsOverride.entityTypeWhitelist.types` 列表。开启后，功能一（原版生物替换）仅替换白名单中指定的原版实体类型（如 ZOMBIE、SKELETON、CREEPER），其他类型保持原样。默认关闭，不影响功能二（EM Boss 替换）。
+
 ## [2.1.2-FAWE.5]
 
 ### Added

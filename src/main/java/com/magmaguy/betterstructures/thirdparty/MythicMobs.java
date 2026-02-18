@@ -164,6 +164,11 @@ public class MythicMobs {
      */
     public static String getRandomMobByType(EntityType entityType) {
         if (!cacheBuilt) return null;
+        // If whitelist is enabled, only allow listed entity types
+        if (DefaultConfig.isEntityTypeWhitelistEnabled()) {
+            List<String> whitelist = DefaultConfig.getEntityTypeWhitelist();
+            if (whitelist == null || !whitelist.contains(entityType.name())) return null;
+        }
         List<String> candidates = typeMappingCache.get(entityType);
         if (candidates == null || candidates.isEmpty()) return null;
         return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));

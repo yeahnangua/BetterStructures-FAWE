@@ -109,6 +109,10 @@ public class DefaultConfig extends ConfigurationFile {
     private static List<String> mythicBossList;
     @Getter
     private static List<String> mythicMobBlacklist;
+    @Getter
+    private static boolean entityTypeWhitelistEnabled;
+    @Getter
+    private static List<String> entityTypeWhitelist;
 
     public DefaultConfig() {
         super("config.yml");
@@ -332,6 +336,23 @@ public class DefaultConfig extends ConfigurationFile {
                         "Use MythicMobs internal IDs. Example: BrokenMob, TestZombie"),
                 fileConfiguration, "mythicMobsOverride.mobBlacklist",
                 List.of());
+
+        entityTypeWhitelistEnabled = ConfigurationEngine.setBoolean(
+                List.of(
+                        "Enable entity type whitelist for vanilla mob override (Feature 1).",
+                        "When enabled, ONLY vanilla mobs whose EntityType is in the whitelist below will be replaced.",
+                        "Other mob types will stay as vanilla and not be replaced by MythicMobs.",
+                        "Does NOT affect Feature 2 (EM boss override)."),
+                fileConfiguration, "mythicMobsOverride.entityTypeWhitelist.enabled", false);
+
+        entityTypeWhitelist = ConfigurationEngine.setList(
+                List.of(
+                        "List of vanilla EntityType names that are allowed to be replaced by MythicMobs.",
+                        "Only effective when entityTypeWhitelist.enabled is true.",
+                        "Use Bukkit EntityType names: ZOMBIE, SKELETON, CREEPER, SPIDER, etc.",
+                        "Mobs NOT in this list will keep their vanilla spawning behavior."),
+                fileConfiguration, "mythicMobsOverride.entityTypeWhitelist.types",
+                List.of("ZOMBIE", "SKELETON", "CREEPER"));
 
         ConfigurationEngine.fileSaverOnlyDefaults(fileConfiguration, file);
     }
