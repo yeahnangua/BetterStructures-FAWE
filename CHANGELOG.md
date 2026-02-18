@@ -2,6 +2,12 @@
 
 All notable changes to BetterStructures-FAWE will be documented in this file.
 
+## [2.1.2-FAWE.5]
+
+### Added
+
+- **全局怪物黑名单**: 新增 `mythicMobsOverride.mobBlacklist` 配置项，黑名单内的 MythicMobs 在功能一（原版生物替换）和功能二（EliteMobs Boss 替换）中均被跳过，不会被选为替换对象。
+
 ## [2.1.2-FAWE.4]
 
 ### Added
