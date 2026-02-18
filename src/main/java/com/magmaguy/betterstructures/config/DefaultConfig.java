@@ -107,6 +107,8 @@ public class DefaultConfig extends ConfigurationFile {
     private static boolean mmOverrideReplaceEliteMobsBosses;
     @Getter
     private static List<String> mythicBossList;
+    @Getter
+    private static List<String> mythicMobBlacklist;
 
     public DefaultConfig() {
         super("config.yml");
@@ -320,6 +322,16 @@ public class DefaultConfig extends ConfigurationFile {
                         "Example: DragonLord, SkeletonKing, ZombieOverlord"),
                 fileConfiguration, "mythicMobsOverride.mythicBossList",
                 List.of("ExampleBoss1", "ExampleBoss2"));
+
+        mythicMobBlacklist = ConfigurationEngine.setList(
+                List.of(
+                        "Global MythicMobs blacklist.",
+                        "Mobs in this list will NEVER be used as replacements by either feature:",
+                        "  - Feature 1 (vanilla mob override): blacklisted mobs are excluded from the type mapping pool.",
+                        "  - Feature 2 (EM boss override): blacklisted mobs are excluded from boss selection.",
+                        "Use MythicMobs internal IDs. Example: BrokenMob, TestZombie"),
+                fileConfiguration, "mythicMobsOverride.mobBlacklist",
+                List.of());
 
         ConfigurationEngine.fileSaverOnlyDefaults(fileConfiguration, file);
     }

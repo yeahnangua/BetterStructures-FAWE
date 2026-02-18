@@ -121,6 +121,7 @@ public class MythicMobs {
         }
 
         Set<String> bossList = new HashSet<>(DefaultConfig.getMythicBossList());
+        Set<String> blacklist = new HashSet<>(DefaultConfig.getMythicMobBlacklist());
 
         try {
             Collection<MythicMob> allMobs =
@@ -133,6 +134,8 @@ public class MythicMobs {
 
                 // Skip bosses (they go in the boss list, not the vanilla replacement pool)
                 if (bossList.contains(mobId)) continue;
+                // Skip globally blacklisted mobs
+                if (blacklist.contains(mobId)) continue;
 
                 MythicEntityType mythicType = mob.getEntityType();
                 EntityType bukkitType = toBukkitEntityType(mythicType);
@@ -173,7 +176,13 @@ public class MythicMobs {
     public static String getRandomBoss() {
         List<String> bossList = DefaultConfig.getMythicBossList();
         if (bossList == null || bossList.isEmpty()) return null;
-        return bossList.get(ThreadLocalRandom.current().nextInt(bossList.size()));
+        Set<String> blacklist = new HashSet<>(DefaultConfig.getMythicMobBlacklist());
+        List<String> filtered = new ArrayList<>();
+        for (String boss : bossList) {
+            if (!blacklist.contains(boss)) filtered.add(boss);
+        }
+        if (filtered.isEmpty()) return null;
+        return filtered.get(ThreadLocalRandom.current().nextInt(filtered.size()));
     }
 
     /**
