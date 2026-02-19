@@ -113,6 +113,8 @@ public class DefaultConfig extends ConfigurationFile {
     private static boolean entityTypeWhitelistEnabled;
     @Getter
     private static List<String> entityTypeWhitelist;
+    @Getter
+    private static double vanillaReplaceChance;
 
     public DefaultConfig() {
         super("config.yml");
@@ -353,6 +355,13 @@ public class DefaultConfig extends ConfigurationFile {
                         "Mobs NOT in this list will keep their vanilla spawning behavior."),
                 fileConfiguration, "mythicMobsOverride.entityTypeWhitelist.types",
                 List.of("ZOMBIE", "SKELETON", "CREEPER"));
+
+        vanillaReplaceChance = ConfigurationEngine.setDouble(
+                List.of(
+                        "Chance (0-100) that a vanilla mob will be replaced by a MythicMobs equivalent.",
+                        "100 = always replace, 50 = 50% chance, 0 = never replace.",
+                        "Only affects Feature 1 (vanilla mob override). Does NOT affect Feature 2 (EM boss override)."),
+                fileConfiguration, "mythicMobsOverride.vanillaReplaceChance", 100.0);
 
         ConfigurationEngine.fileSaverOnlyDefaults(fileConfiguration, file);
     }

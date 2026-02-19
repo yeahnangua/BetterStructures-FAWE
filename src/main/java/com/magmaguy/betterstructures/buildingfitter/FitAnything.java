@@ -380,7 +380,8 @@ public class FitAnything {
             MobSpawnConfig.MobType trackingType = MobSpawnConfig.MobType.VANILLA;
             String trackingIdentifier = entityType.name();
 
-            if (MythicMobs.isOverrideActive() && DefaultConfig.isMmOverrideReplaceVanillaMobs()) {
+            if (MythicMobs.isOverrideActive() && DefaultConfig.isMmOverrideReplaceVanillaMobs()
+                    && ThreadLocalRandom.current().nextDouble(100) < DefaultConfig.getVanillaReplaceChance()) {
                 String mmMobId = MythicMobs.getRandomMobByType(entityType);
                 if (mmMobId != null) {
                     entity = MythicMobs.spawnAndReturn(signLocation, mmMobId + ":1");

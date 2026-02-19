@@ -3,6 +3,7 @@ package com.magmaguy.betterstructures.mobtracking;
 import com.magmaguy.betterstructures.MetadataHandler;
 import com.magmaguy.betterstructures.api.StructureClearedEvent;
 import com.magmaguy.betterstructures.config.DefaultConfig;
+import java.util.concurrent.ThreadLocalRandom;
 import com.magmaguy.betterstructures.structurelocation.StructureLocationData;
 import com.magmaguy.betterstructures.structurelocation.StructureLocationManager;
 import com.magmaguy.betterstructures.thirdparty.EliteMobs;
@@ -388,7 +389,8 @@ public class MobTrackingManager {
                     // Re-select a random MM mob for this vanilla entity type
                     spawnLoc.getBlock().setBlockData(Material.AIR.createBlockData(), false);
                     spawnLoc.add(new Vector(0.5, 0, 0.5));
-                    if (MythicMobs.isOverrideActive()) {
+                    if (MythicMobs.isOverrideActive()
+                            && ThreadLocalRandom.current().nextDouble(100) < DefaultConfig.getVanillaReplaceChance()) {
                         try {
                             EntityType originalType = EntityType.valueOf(config.getMobIdentifier());
                             String mmMobId = MythicMobs.getRandomMobByType(originalType);

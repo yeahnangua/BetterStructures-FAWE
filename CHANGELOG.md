@@ -2,6 +2,12 @@
 
 All notable changes to BetterStructures-FAWE will be documented in this file.
 
+## [2.1.2-FAWE.7]
+
+### Added
+
+- **原版替换概率**: 新增 `mythicMobsOverride.vanillaReplaceChance` 配置项（0-100），控制功能一（原版生物替换）的触发概率。默认 100（必定替换）。重生时同样适用概率判断，未通过则生成原版生物。不影响功能二（EM Boss 替换）。
+
 ## [2.1.2-FAWE.6]
 
 ### Added
