@@ -236,7 +236,7 @@ public class FitUndergroundBuilding extends FitAnything {
         if (location == null)
             return;
 
-        paste(location);
+        paste(location, chunk);
     }
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {

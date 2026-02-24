@@ -37,20 +37,17 @@ public class NewChunkLoadEvent implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChunkLoad(ChunkLoadEvent event) {
-        if (ChunkProcessingMarker.isProcessed(event.getChunk())) return;
-        if (loadingChunks.contains(event.getChunk())) return;
+        Chunk chunk = event.getChunk();
+        if (ChunkProcessingMarker.isProcessed(chunk)) return;
+        if (!loadingChunks.add(chunk)) return;
         //In some cases the same chunk gets loaded (at least at an event level) several times, this prevents the plugin from doing multiple scans and placing multiple builds, enhancing performance
-        loadingChunks.add(event.getChunk());
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                loadingChunks.remove(event.getChunk());
-            }
-        }.runTaskLater(MetadataHandler.PLUGIN, 20L);
-        if (!ValidWorldsConfig.isValidWorld(event.getWorld())) return;
+        if (!ValidWorldsConfig.isValidWorld(event.getWorld())) {
+            loadingChunks.remove(chunk);
+            return;
+        }
 
         // Schedule delayed scanning with validation (Terra/FAWE compatibility)
-        scheduleStructureScan(event.getChunk(), 0);
+        scheduleStructureScan(chunk, 0);
     }
 
     /**
@@ -76,6 +73,7 @@ public class NewChunkLoadEvent implements Listener {
             public void run() {
                 // Validate chunk is still loaded
                 if (!chunk.isLoaded()) {
+                    loadingChunks.remove(chunk);
                     return;
                 }
 
@@ -86,21 +84,15 @@ public class NewChunkLoadEvent implements Listener {
                         scheduleStructureScan(chunk, attemptNumber + 1);
                         return;
                     }
-                    // Max retries reached, proceed anyway to avoid stuck structures
+                    loadingChunks.remove(chunk);
+                    return;
                 }
 
                 // Run terrain scanning asynchronously to avoid blocking the main thread.
                 // All scan operations (getBlock, getHighestBlockAt, etc.) are read-only
                 // and safe to call from async threads on Paper servers.
-                Bukkit.getScheduler().runTaskAsynchronously(MetadataHandler.PLUGIN, () -> {
-                    runScanners(chunk);
-                    // markChunkProcessed writes to PersistentDataContainer, must be on main thread
-                    Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
-                        if (chunk.isLoaded()) {
-                            ChunkProcessingMarker.markProcessed(chunk);
-                        }
-                    });
-                });
+                Bukkit.getScheduler().runTaskAsynchronously(MetadataHandler.PLUGIN, () -> runScanners(chunk));
+                loadingChunks.remove(chunk);
             }
         }.runTaskLater(MetadataHandler.PLUGIN, finalDelayTicks);
     }

@@ -16,6 +16,7 @@ import com.magmaguy.betterstructures.structurelocation.StructureLocationManager;
 import com.magmaguy.betterstructures.thirdparty.EliteMobs;
 import com.magmaguy.betterstructures.thirdparty.MythicMobs;
 import com.magmaguy.betterstructures.thirdparty.WorldGuard;
+import com.magmaguy.betterstructures.util.ChunkProcessingMarker;
 import com.magmaguy.betterstructures.util.SurfaceMaterials;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
 import com.magmaguy.betterstructures.worldedit.Schematic;
@@ -105,6 +106,10 @@ public class FitAnything {
     }
 
     protected void paste(Location location) {
+        paste(location, null);
+    }
+
+    protected void paste(Location location, Chunk sourceChunk) {
         // Ensure paste runs on main thread since BuildPlaceEvent must fire on main thread
         // and this method may be called from async terrain scanning
         Runnable pasteLogic = () -> {
@@ -136,6 +141,11 @@ public class FitAnything {
             Function<Boolean, Material> pedestalMaterialProvider = this::getPedestalMaterial;
             Consumer<Boolean> onPasteResult = success -> {
                 if (success) {
+                    if (sourceChunk != null && sourceChunk.isLoaded()) {
+                        ChunkProcessingMarker.markProcessed(sourceChunk);
+                        Logger.debug("PASTE_SUCCESS_MARKED: " + sourceChunk.getWorld().getName() + " "
+                                + sourceChunk.getX() + "," + sourceChunk.getZ());
+                    }
                     onPasteComplete(fitAnything, location).run();
                 } else {
                     Logger.debug("PASTE_FAILED: " + location.getWorld().getName() + " "

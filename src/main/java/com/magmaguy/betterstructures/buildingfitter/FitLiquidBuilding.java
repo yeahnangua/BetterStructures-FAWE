@@ -75,7 +75,7 @@ public class FitLiquidBuilding extends FitAnything {
             return;
         }
 
-        super.paste(location);
+        super.paste(location, chunk);
     }
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {

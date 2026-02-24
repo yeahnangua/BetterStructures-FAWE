@@ -125,7 +125,7 @@ public class FitAirBuilding extends FitAnything {
             return;
         }
 
-        paste(location);
+        paste(location, chunk);
     }
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {
