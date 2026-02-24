@@ -27,16 +27,19 @@ The original plugin uses `WorkloadRunnable` to place blocks on the main thread i
 
 Resolves chunk state issues when using async world generators like Terra with FAWE:
 
-- Added `ChunkValidationUtil`: samples multiple positions to detect whether a chunk is fully generated, preventing structures from being placed on empty chunks
+- Added delayed chunk scanning with retry control (`terraCompatibility.structureScanDelayTicks` / `structureScanMaxRetries`) to better match async generator timing
 - Uses Paper API `getChunkAtAsync` for async chunk loading, with `PluginChunkTicket` to keep chunks loaded during pasting
+- Enforces pre-paste required-chunk validation (`validateChunkBeforePaste`) before FAWE placement
+- End-specific validation is more tolerant for island terrain (ratio-based invalid-chunk cutoff and `chunk.isGenerated()` checks)
 - All world block access operations ensure chunks are loaded into memory first
 
 ### 3. PersistentDataContainer Chunk Marking
 
 The original plugin relies on `ChunkLoadEvent.isNewChunk()` to identify new chunks, but after a server restart, previously generated but unmarked chunks get scanned again. This fork uses Bukkit `PersistentDataContainer` to persistently mark chunks:
 
-- Processed chunks are tagged with `betterstructures:chunk_processed`
-- No duplicate scanning of already-processed chunks after restart
+- Chunks are tagged with `betterstructures:chunk_processed` only after successful structure paste
+- Scan failures and paste failures do not mark the chunk, so it can retry on future loads
+- No duplicate scanning of already-successfully-processed chunks after restart
 
 ### 4. Structure Location Persistence
 
@@ -60,6 +63,14 @@ Added `MobTrackingManager` and `MobSpawnConfig` for tracking and respawning mobs
 ### 6. Chinese Localization
 
 All user-facing logs, command feedback, and menu text have been translated to Chinese across 27 files.
+
+### 7. Developer Diagnostics & Runtime Toggle
+
+Developer diagnostics are now controlled by a dedicated runtime switch:
+
+- Added `debug.developerMessages` config (default `false`) to gate `[BetterStructures] Developer message` output
+- Added `/bs debug` command for instant runtime toggle (no `/bs reload` required)
+- Unified key generation-path diagnostics behind this gate (`SKIP_PROCESSED`, `SCAN_FAILED`, `PASTE_FAILED`, `PASTE_SUCCESS_MARKED`)
 
 ---
 
@@ -95,21 +106,18 @@ Output: `testbed/plugins/BetterStructures.jar`
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-All commits relative to upstream (chronological order):
+Release highlights by version:
 
-1. **feat: add structure location** - Structure location persistence system
-2. **feat: add mob tracking and respawn system** - MobTrackingManager, MobSpawnConfig, MobDeathListener, StructureClearedEvent
-3. **Merge upstream/master** - Sync upstream 2.1.2
-4. **feat: add Terra + FAWE compatibility** - Delayed chunk scanning for Terra async world generation
-5. **feat: add structure queue system** - Structure placement queue to prevent concurrent paste conflicts
-6. **fix: prevent duplicate structure paste** - Fix queue system duplicate pasting
-7. **fix: use Paper API for reliable async chunk loading** - Use Paper async chunk API
-8. **feat: add chunk generation check at paste level** - Pre-paste chunk integrity verification
-9. **refactor: simplify to single-layer chunk check** - Consolidated to Schematic-level unified check
-10. **fix: ensure chunks are generated before world block access** - Ensure chunks are generated + parallelize schematic loading
-11. **localization** - Full Chinese localization (27 files)
-12. **refactor: migrate block pasting to FAWE async EditSession** - Eliminate main-thread blocking entirely, remove WorkloadRunnable
-13. **fix: replace isNewChunk with PersistentDataContainer** - Persistent chunk processing markers, prevent duplicate scanning after restart
+| Version | Highlights |
+|---------|------------|
+| 2.1.2-FAWE.8 | Success-only chunk processed marking, Terra/End validation refinements, generation diagnostics, runtime debug toggle (`/bs debug`), updated default generation distances |
+| 2.1.2-FAWE.7 | Added `mythicMobsOverride.vanillaReplaceChance` |
+| 2.1.2-FAWE.6 | Added entity-type whitelist for vanilla mob override |
+| 2.1.2-FAWE.5 | Added global MythicMobs blacklist |
+| 2.1.2-FAWE.4 | Added MythicMobs override system and boss-structure metadata |
+| 2.1.2-FAWE.3 | Added `/bs info` structure inspection command |
+| 2.1.2-FAWE.2 | Async terrain scanning, thread-safe paste dispatch, startup/load optimizations |
+| 2.1.2-FAWE.1 | Base FAWE async paste migration, persistent chunk markers, parallelized schematic loading |
 
 ---
 
