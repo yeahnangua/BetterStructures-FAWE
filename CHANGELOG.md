@@ -2,6 +2,18 @@
 
 All notable changes to BetterStructures-FAWE will be documented in this file.
 
+## [2.1.2-FAWE.8]
+
+### Changed
+
+- **成功后标记语义**: `chunk_processed` 语义调整为“仅在结构粘贴成功后写入”。扫描失败或粘贴失败不再写入标记，失败区块可在后续加载时重试；已成功区块仍保持幂等跳过。
+- **Terra 兼容校验收敛**: `validateChunkBeforePaste` 现在在粘贴前逐区块执行 `isChunkFullyGenerated`，任一校验失败即终止本次粘贴并返回失败信号。
+- **扫描一致性**: `TerrainAdequacy` 对未加载区块改为保守失败，避免与 `Topology` 的未加载处理语义冲突。
+
+### Added
+
+- **可观测性日志事件**: 新增/统一 `SKIP_PROCESSED`、`SCAN_FAILED`、`PASTE_FAILED`、`PASTE_SUCCESS_MARKED` 四类调试日志，覆盖自然生成关键路径。
+
 ## [2.1.2-FAWE.7]
 
 ### Added

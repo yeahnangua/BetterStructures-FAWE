@@ -35,8 +35,9 @@
 
 原版依赖 `ChunkLoadEvent.isNewChunk()` 判断是否为新区块，服务器重启后已生成但未标记的区块会被重复扫描。本分支改用 Bukkit `PersistentDataContainer` 在区块上持久化标记：
 
-- 已处理的区块写入 `betterstructures:chunk_processed` 标记
-- 重启后不会重复扫描已处理的区块
+- 仅在结构成功放置后写入 `betterstructures:chunk_processed` 标记
+- 扫描失败或粘贴失败不会写入标记，后续区块加载仍可重试
+- 重启后不会重复扫描已成功处理的区块
 
 ### 4. 结构位置持久化系统
 

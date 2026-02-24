@@ -38,7 +38,10 @@ public class NewChunkLoadEvent implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChunkLoad(ChunkLoadEvent event) {
         Chunk chunk = event.getChunk();
-        if (ChunkProcessingMarker.isProcessed(chunk)) return;
+        if (ChunkProcessingMarker.isProcessed(chunk)) {
+            Logger.debug("SKIP_PROCESSED: " + chunk.getWorld().getName() + " " + chunk.getX() + "," + chunk.getZ());
+            return;
+        }
         if (!loadingChunks.add(chunk)) return;
         //In some cases the same chunk gets loaded (at least at an event level) several times, this prevents the plugin from doing multiple scans and placing multiple builds, enhancing performance
         if (!ValidWorldsConfig.isValidWorld(event.getWorld())) {
@@ -73,6 +76,8 @@ public class NewChunkLoadEvent implements Listener {
             public void run() {
                 // Validate chunk is still loaded
                 if (!chunk.isLoaded()) {
+                    Logger.debug("SCAN_FAILED: chunk_unloaded " + chunk.getWorld().getName() + " "
+                            + chunk.getX() + "," + chunk.getZ() + " attempt=" + attemptNumber);
                     loadingChunks.remove(chunk);
                     return;
                 }
@@ -84,6 +89,8 @@ public class NewChunkLoadEvent implements Listener {
                         scheduleStructureScan(chunk, attemptNumber + 1);
                         return;
                     }
+                    Logger.debug("SCAN_FAILED: retries_exhausted " + chunk.getWorld().getName() + " "
+                            + chunk.getX() + "," + chunk.getZ() + " attempts=" + (attemptNumber + 1));
                     loadingChunks.remove(chunk);
                     return;
                 }

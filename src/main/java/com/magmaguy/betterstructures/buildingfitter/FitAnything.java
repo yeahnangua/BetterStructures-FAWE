@@ -144,7 +144,8 @@ public class FitAnything {
                     if (sourceChunk != null && sourceChunk.isLoaded()) {
                         ChunkProcessingMarker.markProcessed(sourceChunk);
                         Logger.debug("PASTE_SUCCESS_MARKED: " + sourceChunk.getWorld().getName() + " "
-                                + sourceChunk.getX() + "," + sourceChunk.getZ());
+                                + sourceChunk.getX() + "," + sourceChunk.getZ()
+                                + " schematic=" + schematicContainer.getConfigFilename());
                     }
                     onPasteComplete(fitAnything, location).run();
                 } else {
