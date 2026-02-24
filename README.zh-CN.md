@@ -27,8 +27,10 @@
 
 解决了 Terra 等异步世界生成器与 FAWE 配合时的区块状态问题：
 
-- 新增 `ChunkValidationUtil`：通过采样多个位置检测区块是否已完全生成，避免在空区块上放置建筑
+- 新增延迟扫描与重试控制（`terraCompatibility.structureScanDelayTicks` / `structureScanMaxRetries`），更好适配异步地形生成时序
 - 使用 Paper API `getChunkAtAsync` 异步加载区块，并添加 `PluginChunkTicket` 在粘贴期间保持区块不被卸载
+- 在 FAWE 粘贴前强制执行所需区块校验（`validateChunkBeforePaste`）
+- 末地校验改为更适配岛屿地形（无效区块比例阈值 + `chunk.isGenerated()` 判定）
 - 所有涉及世界方块访问的操作都确保区块已加载到内存
 
 ### 3. PersistentDataContainer 区块标记
@@ -62,6 +64,14 @@
 
 所有用户可见的日志、命令反馈、菜单文本均已翻译为中文，涉及 27 个文件。
 
+### 7. 开发诊断与运行时开关
+
+开发诊断日志现已支持独立开关控制：
+
+- 新增 `debug.developerMessages` 配置项（默认 `false`），控制 `[BetterStructures] Developer message` 日志输出
+- 新增 `/bs debug` 命令，可运行时快速切换该开关（无需 `/bs reload`）
+- 生成链路核心诊断统一接入该门控（`SKIP_PROCESSED`、`SCAN_FAILED`、`PASTE_FAILED`、`PASTE_SUCCESS_MARKED`）
+
 ---
 
 ## 环境要求
@@ -94,21 +104,20 @@
 
 ## 完整变更列表
 
-以下为本分支相对于上游的所有提交 (按时间顺序)：
+详细版本历史请查看 [CHANGELOG.md](CHANGELOG.md)。
 
-1. **feat: 添加结构 location** - 结构位置持久化系统
-2. **feat: 添加怪物追踪和重生系统** - MobTrackingManager, MobSpawnConfig, MobDeathListener, StructureClearedEvent
-3. **Merge upstream/master** - 同步上游 2.1.2 版本
-4. **feat: add Terra + FAWE compatibility** - 延迟区块扫描，适配 Terra 异步世界生成
-5. **feat: add structure queue system** - 结构放置队列，防止并发粘贴冲突
-6. **fix: prevent duplicate structure paste** - 修复队列系统重复粘贴
-7. **fix: use Paper API for reliable async chunk loading** - 使用 Paper 异步区块 API
-8. **feat: add chunk generation check at paste level** - 粘贴前校验区块完整性
-9. **refactor: simplify to single-layer chunk check** - 精简为 Schematic 层统一校验
-10. **fix: ensure chunks are generated before world block access** - 确保区块已生成 + 并行化原理图加载
-11. **汉化** - 全量中文本地化 (27 个文件)
-12. **refactor: 将方块粘贴迁移到 FAWE 异步 EditSession** - 彻底消除主线程阻塞，移除 WorkloadRunnable
-13. **fix: 用 PersistentDataContainer 替代 isNewChunk** - 持久化区块处理标记，防止重启后重复扫描
+按版本的重点摘要：
+
+| 版本 | 重点变更 |
+|------|----------|
+| 2.1.2-FAWE.8 | 成功后区块标记语义、Terra/末地校验优化、生成诊断日志、`/bs debug` 运行时开关、默认生成距离调整 |
+| 2.1.2-FAWE.7 | 新增 `mythicMobsOverride.vanillaReplaceChance` |
+| 2.1.2-FAWE.6 | 新增原版生物替换实体类型白名单 |
+| 2.1.2-FAWE.5 | 新增全局 MythicMobs 黑名单 |
+| 2.1.2-FAWE.4 | 新增 MythicMobs 覆盖系统与 Boss 结构标记 |
+| 2.1.2-FAWE.3 | 新增 `/bs info` 结构信息查询命令 |
+| 2.1.2-FAWE.2 | 异步地形扫描、线程安全粘贴调度、启动/加载优化 |
+| 2.1.2-FAWE.1 | 基线 FAWE 异步粘贴迁移、持久化区块标记、并行化原理图加载 |
 
 ---
 
