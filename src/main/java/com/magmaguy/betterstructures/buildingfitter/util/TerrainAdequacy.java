@@ -46,7 +46,7 @@ public class TerrainAdequacy {
         if (!projectedWorldLocation.getWorld().isChunkLoaded(
                 projectedWorldLocation.getBlockX() >> 4,
                 projectedWorldLocation.getBlockZ() >> 4)) {
-            return true; // Assume adequate if chunk not loaded
+            return false;
         }
 
         int floorYValue = projectedWorldLocation.getBlockY();

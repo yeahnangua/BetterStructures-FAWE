@@ -1,6 +1,8 @@
 package com.magmaguy.betterstructures.worldedit;
 
 import com.magmaguy.betterstructures.MetadataHandler;
+import com.magmaguy.betterstructures.config.DefaultConfig;
+import com.magmaguy.betterstructures.util.ChunkValidationUtil;
 import com.magmaguy.magmacore.util.Logger;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -154,6 +156,10 @@ public class Schematic {
 
         if (chunkFutures.isEmpty()) {
             // No chunks required (empty schematic?), proceed immediately on main thread
+            if (!validateRequiredChunks(world, requiredChunks)) {
+                if (onComplete != null) onComplete.accept(false);
+                return;
+            }
             if (prePasteCallback != null) prePasteCallback.run();
             executeFaweAsyncPaste(schematicClipboard, location, schematicOffset,
                     pedestalMaterialProvider, onComplete, requiredChunks, world);
@@ -165,6 +171,10 @@ public class Schematic {
                     .thenRun(() -> {
                         // Step 3: Main thread — run prePasteCallback and add chunk tickets
                         Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
+                            if (!validateRequiredChunks(world, requiredChunks)) {
+                                if (onComplete != null) onComplete.accept(false);
+                                return;
+                            }
                             if (prePasteCallback != null) prePasteCallback.run();
 
                             // Add chunk tickets to keep chunks loaded during async paste
@@ -180,6 +190,26 @@ public class Schematic {
                         });
                     });
         }
+    }
+
+    private static boolean validateRequiredChunks(org.bukkit.World world, Set<Long> requiredChunks) {
+        if (!DefaultConfig.isValidateChunkBeforePaste()) {
+            return true;
+        }
+
+        for (Long key : requiredChunks) {
+            int chunkX = (int) (key >> 32);
+            int chunkZ = key.intValue();
+            if (!world.isChunkLoaded(chunkX, chunkZ)) {
+                return false;
+            }
+
+            Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+            if (!ChunkValidationUtil.isChunkFullyGenerated(chunk)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

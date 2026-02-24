@@ -1,14 +1,8 @@
 package com.magmaguy.betterstructures.util;
 
-import com.magmaguy.betterstructures.config.DefaultConfig;
-import com.magmaguy.magmacore.util.Logger;
 import org.bukkit.Chunk;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Utility class for validating chunk generation state.
@@ -75,67 +69,6 @@ public class ChunkValidationUtil {
     }
 
     /**
-     * Validates that all chunks within a block coordinate range are loaded and fully generated.
-     * Respects the validateChunkBeforePaste config option; if disabled, always returns true.
-     *
-     * @param world the world to check in
-     * @param minX  minimum block X coordinate
-     * @param minZ  minimum block Z coordinate
-     * @param maxX  maximum block X coordinate
-     * @param maxZ  maximum block Z coordinate
-     * @return true if all chunks in the range are ready, false otherwise
-     */
-    public static boolean areChunksReadyForStructure(World world, int minX, int minZ, int maxX, int maxZ) {
-        if (!DefaultConfig.isValidateChunkBeforePaste()) return true;
-
-        int minChunkX = minX >> 4;
-        int minChunkZ = minZ >> 4;
-        int maxChunkX = maxX >> 4;
-        int maxChunkZ = maxZ >> 4;
-
-        for (int cx = minChunkX; cx <= maxChunkX; cx++) {
-            for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
-                if (!world.isChunkLoaded(cx, cz)) {
-                    return false;
-                }
-                if (!isChunkFullyGenerated(world.getChunkAt(cx, cz))) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Calculates the set of chunk coordinates required for a structure at the given location.
-     * Includes a 1-chunk padding around the structure footprint (effectively 3x3 for single-chunk structures)
-     * to ensure surrounding terrain is ready for WorldEdit pasting.
-     * Each entry is a string in the format "cx,cz".
-     *
-     * @param location the origin location of the structure
-     * @param width    the width of the structure in blocks (X axis)
-     * @param depth    the depth of the structure in blocks (Z axis)
-     * @return a set of chunk coordinate strings covering the structure footprint plus padding
-     */
-    public static Set<String> getRequiredChunks(Location location, int width, int depth) {
-        Set<String> chunks = new HashSet<>();
-
-        int minChunkX = (location.getBlockX() >> 4) - 1;
-        int minChunkZ = (location.getBlockZ() >> 4) - 1;
-        int maxChunkX = ((location.getBlockX() + width) >> 4) + 1;
-        int maxChunkZ = ((location.getBlockZ() + depth) >> 4) + 1;
-
-        for (int cx = minChunkX; cx <= maxChunkX; cx++) {
-            for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
-                chunks.add(cx + "," + cz);
-            }
-        }
-
-        return chunks;
-    }
-
-    /**
      * Checks if a chunk has reached ENTITY_TICKING load level (fully ready).
      * This is the highest load level, meaning the chunk is fully loaded,
      * all neighbors are loaded, and entities can tick.
@@ -159,37 +92,4 @@ public class ChunkValidationUtil {
         }
     }
 
-    /**
-     * Checks if a chunk and all its immediate neighbors (3x3 area) are fully ready.
-     * This is important for structure placement as structures often span multiple chunks.
-     *
-     * @param chunk the center chunk to check
-     * @return true if the center chunk and all 8 neighbors are fully ready
-     */
-    public static boolean isChunkAreaFullyReady(Chunk chunk) {
-        if (chunk == null) return false;
-
-        World world = chunk.getWorld();
-        int cx = chunk.getX();
-        int cz = chunk.getZ();
-
-        // Check 3x3 area centered on the chunk
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                int checkX = cx + dx;
-                int checkZ = cz + dz;
-
-                if (!world.isChunkLoaded(checkX, checkZ)) {
-                    return false;
-                }
-
-                Chunk neighborChunk = world.getChunkAt(checkX, checkZ);
-                if (!isChunkFullyReady(neighborChunk)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
 }
