@@ -42,7 +42,7 @@ public class FitAirBuilding extends FitAnything {
                 altitude = 0;
                 break;
             case THE_END:
-                altitude = ThreadLocalRandom.current().nextInt(DefaultConfig.getEndAirBuildMinAltitude(), DefaultConfig.getEndAirBuildMinAltitude() + 1);
+                altitude = ThreadLocalRandom.current().nextInt(DefaultConfig.getEndAirBuildMinAltitude(), DefaultConfig.getEndAirBuildMaxAltitude() + 1);
                 break;
         }
         Location originalLocation = chunk.getWorld().getHighestBlockAt(chunk.getX() * 16 + 8, chunk.getZ() * 16 + 8).getLocation().add(new Vector(0, altitude, 0));
