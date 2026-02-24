@@ -36,6 +36,8 @@ import java.util.function.Function;
 public class Schematic {
     private static boolean erroredOnce = false;
 
+    public record PasteResult(boolean success, String reason) {}
+
     private Schematic() {
     }
 
@@ -134,12 +136,12 @@ public class Schematic {
             Vector schematicOffset,
             Runnable prePasteCallback,
             Function<Boolean, Material> pedestalMaterialProvider,
-            Consumer<Boolean> onComplete) {
+            Consumer<PasteResult> onComplete) {
 
         org.bukkit.World world = location.getWorld();
         if (world == null) {
             Logger.warn("无法粘贴: 世界为空");
-            if (onComplete != null) onComplete.accept(false);
+            if (onComplete != null) onComplete.accept(failureResult("world_null"));
             return;
         }
 
@@ -156,8 +158,9 @@ public class Schematic {
 
         if (chunkFutures.isEmpty()) {
             // No chunks required (empty schematic?), proceed immediately on main thread
-            if (!validateRequiredChunks(world, requiredChunks)) {
-                if (onComplete != null) onComplete.accept(false);
+            String validationFailure = validateRequiredChunks(world, requiredChunks);
+            if (validationFailure != null) {
+                if (onComplete != null) onComplete.accept(failureResult("chunk_validation_failed:" + validationFailure));
                 return;
             }
             if (prePasteCallback != null) prePasteCallback.run();
@@ -171,8 +174,9 @@ public class Schematic {
                     .thenRun(() -> {
                         // Step 3: Main thread — run prePasteCallback and add chunk tickets
                         Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
-                            if (!validateRequiredChunks(world, requiredChunks)) {
-                                if (onComplete != null) onComplete.accept(false);
+                            String validationFailure = validateRequiredChunks(world, requiredChunks);
+                            if (validationFailure != null) {
+                                if (onComplete != null) onComplete.accept(failureResult("chunk_validation_failed:" + validationFailure));
                                 return;
                             }
                             if (prePasteCallback != null) prePasteCallback.run();
@@ -192,24 +196,52 @@ public class Schematic {
         }
     }
 
-    private static boolean validateRequiredChunks(org.bukkit.World world, Set<Long> requiredChunks) {
+    private static String validateRequiredChunks(org.bukkit.World world, Set<Long> requiredChunks) {
         if (!DefaultConfig.isValidateChunkBeforePaste()) {
-            return true;
+            return null;
         }
+
+        boolean isEnd = world.getEnvironment() == org.bukkit.World.Environment.THE_END;
+        int totalChunks = requiredChunks.size();
+        int invalidChunks = 0;
+        String firstFailure = null;
 
         for (Long key : requiredChunks) {
             int chunkX = (int) (key >> 32);
             int chunkZ = key.intValue();
+            String chunkFailure = null;
+
             if (!world.isChunkLoaded(chunkX, chunkZ)) {
-                return false;
+                chunkFailure = "chunk_unloaded@" + chunkX + "," + chunkZ;
+            } else {
+                Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+                String generationFailure = ChunkValidationUtil.getChunkGenerationFailureReason(chunk);
+                if (generationFailure != null) {
+                    chunkFailure = "chunk_not_fully_generated@" + chunkX + "," + chunkZ + " detail=" + generationFailure;
+                }
             }
 
-            Chunk chunk = world.getChunkAt(chunkX, chunkZ);
-            if (!ChunkValidationUtil.isChunkFullyGenerated(chunk)) {
-                return false;
+            if (chunkFailure == null) {
+                continue;
+            }
+
+            if (!isEnd) {
+                return chunkFailure;
+            }
+
+            invalidChunks++;
+            if (firstFailure == null) {
+                firstFailure = chunkFailure;
+            }
+
+            if ((long) invalidChunks * 3 >= (long) totalChunks * 2) {
+                return "end_invalid_chunk_ratio_exceeded invalid=" + invalidChunks
+                        + ",total=" + totalChunks
+                        + ",policy=invalid>=2/3"
+                        + ",first_failure=" + firstFailure;
             }
         }
-        return true;
+        return null;
     }
 
     /**
@@ -220,12 +252,13 @@ public class Schematic {
             Location location,
             Vector schematicOffset,
             Function<Boolean, Material> pedestalMaterialProvider,
-            Consumer<Boolean> onComplete,
+            Consumer<PasteResult> onComplete,
             Set<Long> requiredChunks,
             org.bukkit.World bukkitWorld) {
 
         Bukkit.getScheduler().runTaskAsynchronously(MetadataHandler.PLUGIN, () -> {
             boolean success = true;
+            String failureReason = "unknown";
             try {
                 World weWorld = BukkitAdapter.adapt(bukkitWorld);
                 Location adjustedLocation = location.clone().add(schematicOffset);
@@ -274,21 +307,39 @@ public class Schematic {
 
             } catch (Exception e) {
                 success = false;
+                String exceptionMessage = e.getMessage() == null ? "" : (":" + e.getMessage());
+                failureReason = "fawe_exception:" + e.getClass().getSimpleName() + exceptionMessage;
                 Logger.warn("FAWE 异步粘贴失败: " + e.getMessage());
                 e.printStackTrace();
             }
 
             // Step 5: Back to main thread — release chunk tickets and run onComplete
             boolean finalSuccess = success;
+            String finalFailureReason = failureReason;
             Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
                 for (Long key : requiredChunks) {
                     int chunkX = (int) (key >> 32);
                     int chunkZ = key.intValue();
                     bukkitWorld.removePluginChunkTicket(chunkX, chunkZ, MetadataHandler.PLUGIN);
                 }
-                if (onComplete != null) onComplete.accept(finalSuccess);
+                if (onComplete != null) {
+                    if (finalSuccess) {
+                        onComplete.accept(successResult());
+                    } else {
+                        onComplete.accept(failureResult(finalFailureReason));
+                    }
+                }
             });
         });
+    }
+
+    private static PasteResult successResult() {
+        return new PasteResult(true, "success");
+    }
+
+    private static PasteResult failureResult(String reason) {
+        if (reason == null || reason.isEmpty()) return new PasteResult(false, "unknown");
+        return new PasteResult(false, reason);
     }
 
     /**

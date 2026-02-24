@@ -242,8 +242,9 @@ public class FitUndergroundBuilding extends FitAnything {
                 if (highestScore > 90) break;
             }
 
-        if (location == null)
+        if (location == null) {
             return;
+        }
 
         paste(location, chunk);
     }

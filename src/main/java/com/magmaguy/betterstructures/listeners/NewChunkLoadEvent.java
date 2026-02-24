@@ -82,7 +82,7 @@ public class NewChunkLoadEvent implements Listener {
                     return;
                 }
 
-                // Validate chunk is fully ready (ENTITY_TICKING level for Paper, FAWE compatibility)
+                // Validate chunk is ready for scanning (BORDER+ load level for Paper, FAWE compatibility)
                 if (!ChunkValidationUtil.isChunkFullyReady(chunk)) {
                     if (attemptNumber < maxAttempts) {
                         // Retry with same delay

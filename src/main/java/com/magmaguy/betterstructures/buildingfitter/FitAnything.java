@@ -139,8 +139,8 @@ public class FitAnything {
 
             // Create a function to provide pedestal material
             Function<Boolean, Material> pedestalMaterialProvider = this::getPedestalMaterial;
-            Consumer<Boolean> onPasteResult = success -> {
-                if (success) {
+            Consumer<Schematic.PasteResult> onPasteResult = pasteResult -> {
+                if (pasteResult.success()) {
                     if (sourceChunk != null && sourceChunk.isLoaded()) {
                         ChunkProcessingMarker.markProcessed(sourceChunk);
                         Logger.debug("PASTE_SUCCESS_MARKED: " + sourceChunk.getWorld().getName() + " "
@@ -151,7 +151,8 @@ public class FitAnything {
                 } else {
                     Logger.debug("PASTE_FAILED: " + location.getWorld().getName() + " "
                             + location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ()
-                            + " schematic=" + schematicContainer.getConfigFilename());
+                            + " schematic=" + schematicContainer.getConfigFilename()
+                            + " reason=" + pasteResult.reason());
                 }
             };
 
