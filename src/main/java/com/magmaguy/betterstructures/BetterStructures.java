@@ -104,6 +104,7 @@ public final class BetterStructures extends JavaPlugin {
         commandManager.registerCommand(new PregenerateCommand());
         commandManager.registerCommand(new CancelPregenerateCommand());
         commandManager.registerCommand(new ReloadCommand());
+        commandManager.registerCommand(new DebugCommand());
         commandManager.registerCommand(new SilentCommand());
         commandManager.registerCommand(new TeleportCommand());
         commandManager.registerCommand(new VersionCommand());

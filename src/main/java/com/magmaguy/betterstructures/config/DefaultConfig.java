@@ -97,6 +97,8 @@ public class DefaultConfig extends ConfigurationFile {
     private static boolean terraCompatibilityMode;
     @Getter
     private static boolean validateChunkBeforePaste;
+    @Getter
+    private static boolean developerMessages;
 
     // MythicMobs override configuration
     @Getter
@@ -136,6 +138,12 @@ public class DefaultConfig extends ConfigurationFile {
         newBuildingWarn = !newBuildingWarn;
         ConfigurationEngine.writeValue(newBuildingWarn, instance.file, instance.fileConfiguration, "warnAdminsAboutNewBuildings");
         return newBuildingWarn;
+    }
+
+    public static boolean toggleDeveloperMessages() {
+        developerMessages = !developerMessages;
+        ConfigurationEngine.writeValue(developerMessages, instance.file, instance.fileConfiguration, "debug.developerMessages");
+        return developerMessages;
     }
 
     @Override
@@ -297,6 +305,13 @@ public class DefaultConfig extends ConfigurationFile {
                         "Prevents structures from being placed on incomplete terrain.",
                         "Disable only if experiencing performance issues."),
                 fileConfiguration, "terraCompatibility.validateChunkBeforePaste", true);
+
+        developerMessages = ConfigurationEngine.setBoolean(
+                List.of(
+                        "Enable developer diagnostic messages in console.",
+                        "When disabled, '[BetterStructures] Developer message' logs are hidden.",
+                        "Can be toggled at runtime with /bs debug."),
+                fileConfiguration, "debug.developerMessages", false);
 
         // MythicMobs override configuration
         mythicMobsOverrideEnabled = ConfigurationEngine.setBoolean(

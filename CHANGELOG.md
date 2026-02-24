@@ -9,10 +9,16 @@ All notable changes to BetterStructures-FAWE will be documented in this file.
 - **成功后标记语义**: `chunk_processed` 语义调整为“仅在结构粘贴成功后写入”。扫描失败或粘贴失败不再写入标记，失败区块可在后续加载时重试；已成功区块仍保持幂等跳过。
 - **Terra 兼容校验收敛**: `validateChunkBeforePaste` 现在在粘贴前逐区块执行 `isChunkFullyGenerated`，任一校验失败即终止本次粘贴并返回失败信号。
 - **扫描一致性**: `TerrainAdequacy` 对未加载区块改为保守失败，避免与 `Topology` 的未加载处理语义冲突。
+- **末地容错校验策略**: 在 `THE_END` 维度，结构粘贴前区块校验改为按比例判定，只有当不合格区块达到 `>= 2/3` 时才放弃粘贴，避免一票否决导致末地生成率过低。
+- **区块生成判定调整**: 末地优先使用 `chunk.isGenerated()` 作为生成完成判据，不再依赖 `air_only/void_air` 启发式对末地岛屿地形做硬拦截。
+- **默认生成间距调整**: 默认距离参数改为 `distanceSurface=15`、`distanceShallow=20`、`distanceDeep=20`、`distanceSky=25`、`distanceLiquid=40`。
+- **调试日志统一门控**: 自然生成与粘贴链路中的 `SKIP_PROCESSED`、`SCAN_FAILED`、`PASTE_FAILED`、`PASTE_SUCCESS_MARKED` 以及相关调试日志统一接入 debug 开关门控。
 
 ### Added
 
 - **可观测性日志事件**: 新增/统一 `SKIP_PROCESSED`、`SCAN_FAILED`、`PASTE_FAILED`、`PASTE_SUCCESS_MARKED` 四类调试日志，覆盖自然生成关键路径。
+- **Developer message 开关**: 新增 `debug.developerMessages` 配置项（默认 `false`）。关闭时不再输出 `[BetterStructures] Developer message` 日志。
+- **热切换命令**: 新增 `/bs debug` 命令，可在运行中快速切换 `debug.developerMessages`，无需执行 `/bs reload`。
 
 ## [2.1.2-FAWE.7]
 

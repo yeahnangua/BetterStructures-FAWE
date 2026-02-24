@@ -8,6 +8,7 @@ import com.magmaguy.betterstructures.structurelocation.StructureLocationData;
 import com.magmaguy.betterstructures.structurelocation.StructureLocationManager;
 import com.magmaguy.betterstructures.thirdparty.EliteMobs;
 import com.magmaguy.betterstructures.thirdparty.MythicMobs;
+import com.magmaguy.betterstructures.util.DeveloperLogger;
 import com.magmaguy.magmacore.util.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -189,7 +190,7 @@ public class MobTrackingManager {
         // Index the structure for proximity queries
         indexStructure(structure);
 
-        Logger.debug("Registered " + mobUUIDs.size() + " mobs for structure at " + structure.getFormattedCoordinates());
+        DeveloperLogger.debug("Registered " + mobUUIDs.size() + " mobs for structure at " + structure.getFormattedCoordinates());
     }
 
     /**
@@ -215,7 +216,7 @@ public class MobTrackingManager {
         Integer configIndex = mobToConfigIndexMap.remove(mobUUID);
         if (configIndex != null) {
             structure.markSpawnAsKilled(configIndex);
-            Logger.debug("Marked spawn index " + configIndex + " as killed for structure at " + structure.getFormattedCoordinates());
+            DeveloperLogger.debug("Marked spawn index " + configIndex + " as killed for structure at " + structure.getFormattedCoordinates());
         }
 
         structure.removeTrackedMob(mobUUID);
@@ -301,7 +302,7 @@ public class MobTrackingManager {
             if (!respawnedMobs.isEmpty()) {
                 structure.incrementRespawnCount();
                 StructureLocationManager.getInstance().markDirty(structure.getWorldName());
-                Logger.debug("Respawned " + respawnedMobs.size() + " mobs at structure " + structure.getFormattedCoordinates());
+                DeveloperLogger.debug("Respawned " + respawnedMobs.size() + " mobs at structure " + structure.getFormattedCoordinates());
             }
         } finally {
             processingStructures.remove(structureKey);

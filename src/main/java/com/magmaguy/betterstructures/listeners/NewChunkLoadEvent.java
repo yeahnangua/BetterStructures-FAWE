@@ -11,7 +11,7 @@ import com.magmaguy.betterstructures.config.ValidWorldsConfig;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import com.magmaguy.betterstructures.util.ChunkProcessingMarker;
 import com.magmaguy.betterstructures.util.ChunkValidationUtil;
-import com.magmaguy.magmacore.util.Logger;
+import com.magmaguy.betterstructures.util.DeveloperLogger;
 import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsConfig;
 import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsConfigFields;
 import com.magmaguy.betterstructures.modules.WFCGenerator;
@@ -39,7 +39,7 @@ public class NewChunkLoadEvent implements Listener {
     public void onChunkLoad(ChunkLoadEvent event) {
         Chunk chunk = event.getChunk();
         if (ChunkProcessingMarker.isProcessed(chunk)) {
-            Logger.debug("SKIP_PROCESSED: " + chunk.getWorld().getName() + " " + chunk.getX() + "," + chunk.getZ());
+            DeveloperLogger.debug("SKIP_PROCESSED: " + chunk.getWorld().getName() + " " + chunk.getX() + "," + chunk.getZ());
             return;
         }
         if (!loadingChunks.add(chunk)) return;
@@ -76,7 +76,7 @@ public class NewChunkLoadEvent implements Listener {
             public void run() {
                 // Validate chunk is still loaded
                 if (!chunk.isLoaded()) {
-                    Logger.debug("SCAN_FAILED: chunk_unloaded " + chunk.getWorld().getName() + " "
+                    DeveloperLogger.debug("SCAN_FAILED: chunk_unloaded " + chunk.getWorld().getName() + " "
                             + chunk.getX() + "," + chunk.getZ() + " attempt=" + attemptNumber);
                     loadingChunks.remove(chunk);
                     return;
@@ -89,7 +89,7 @@ public class NewChunkLoadEvent implements Listener {
                         scheduleStructureScan(chunk, attemptNumber + 1);
                         return;
                     }
-                    Logger.debug("SCAN_FAILED: retries_exhausted " + chunk.getWorld().getName() + " "
+                    DeveloperLogger.debug("SCAN_FAILED: retries_exhausted " + chunk.getWorld().getName() + " "
                             + chunk.getX() + "," + chunk.getZ() + " attempts=" + (attemptNumber + 1));
                     loadingChunks.remove(chunk);
                     return;

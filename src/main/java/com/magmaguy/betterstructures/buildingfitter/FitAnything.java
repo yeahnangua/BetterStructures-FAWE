@@ -17,6 +17,7 @@ import com.magmaguy.betterstructures.thirdparty.EliteMobs;
 import com.magmaguy.betterstructures.thirdparty.MythicMobs;
 import com.magmaguy.betterstructures.thirdparty.WorldGuard;
 import com.magmaguy.betterstructures.util.ChunkProcessingMarker;
+import com.magmaguy.betterstructures.util.DeveloperLogger;
 import com.magmaguy.betterstructures.util.SurfaceMaterials;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
 import com.magmaguy.betterstructures.worldedit.Schematic;
@@ -143,13 +144,13 @@ public class FitAnything {
                 if (pasteResult.success()) {
                     if (sourceChunk != null && sourceChunk.isLoaded()) {
                         ChunkProcessingMarker.markProcessed(sourceChunk);
-                        Logger.debug("PASTE_SUCCESS_MARKED: " + sourceChunk.getWorld().getName() + " "
+                        DeveloperLogger.debug("PASTE_SUCCESS_MARKED: " + sourceChunk.getWorld().getName() + " "
                                 + sourceChunk.getX() + "," + sourceChunk.getZ()
                                 + " schematic=" + schematicContainer.getConfigFilename());
                     }
                     onPasteComplete(fitAnything, location).run();
                 } else {
-                    Logger.debug("PASTE_FAILED: " + location.getWorld().getName() + " "
+                    DeveloperLogger.debug("PASTE_FAILED: " + location.getWorld().getName() + " "
                             + location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ()
                             + " schematic=" + schematicContainer.getConfigFilename()
                             + " reason=" + pasteResult.reason());

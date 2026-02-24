@@ -3,6 +3,7 @@ package com.magmaguy.betterstructures.worldedit;
 import com.magmaguy.betterstructures.MetadataHandler;
 import com.magmaguy.betterstructures.config.DefaultConfig;
 import com.magmaguy.betterstructures.util.ChunkValidationUtil;
+import com.magmaguy.betterstructures.util.DeveloperLogger;
 import com.magmaguy.magmacore.util.Logger;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -167,7 +168,7 @@ public class Schematic {
             executeFaweAsyncPaste(schematicClipboard, location, schematicOffset,
                     pedestalMaterialProvider, onComplete, requiredChunks, world);
         } else {
-            Logger.debug("Loading " + chunkFutures.size() + " chunks before pasting at " +
+            DeveloperLogger.debug("Loading " + chunkFutures.size() + " chunks before pasting at " +
                     location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ());
 
             CompletableFuture.allOf(chunkFutures.toArray(new CompletableFuture[0]))
