@@ -16,6 +16,7 @@ import com.magmaguy.betterstructures.structurelocation.StructureLocationManager;
 import com.magmaguy.betterstructures.thirdparty.EliteMobs;
 import com.magmaguy.betterstructures.thirdparty.MythicMobs;
 import com.magmaguy.betterstructures.thirdparty.WorldGuard;
+import com.magmaguy.betterstructures.util.ChunkProcessingMarker;
 import com.magmaguy.betterstructures.util.SurfaceMaterials;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
 import com.magmaguy.betterstructures.worldedit.Schematic;
@@ -42,6 +43,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class FitAnything {
@@ -104,6 +106,10 @@ public class FitAnything {
     }
 
     protected void paste(Location location) {
+        paste(location, null);
+    }
+
+    protected void paste(Location location, Chunk sourceChunk) {
         // Ensure paste runs on main thread since BuildPlaceEvent must fire on main thread
         // and this method may be called from async terrain scanning
         Runnable pasteLogic = () -> {
@@ -133,6 +139,22 @@ public class FitAnything {
 
             // Create a function to provide pedestal material
             Function<Boolean, Material> pedestalMaterialProvider = this::getPedestalMaterial;
+            Consumer<Schematic.PasteResult> onPasteResult = pasteResult -> {
+                if (pasteResult.success()) {
+                    if (sourceChunk != null && sourceChunk.isLoaded()) {
+                        ChunkProcessingMarker.markProcessed(sourceChunk);
+                        Logger.debug("PASTE_SUCCESS_MARKED: " + sourceChunk.getWorld().getName() + " "
+                                + sourceChunk.getX() + "," + sourceChunk.getZ()
+                                + " schematic=" + schematicContainer.getConfigFilename());
+                    }
+                    onPasteComplete(fitAnything, location).run();
+                } else {
+                    Logger.debug("PASTE_FAILED: " + location.getWorld().getName() + " "
+                            + location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ()
+                            + " schematic=" + schematicContainer.getConfigFilename()
+                            + " reason=" + pasteResult.reason());
+                }
+            };
 
             // Paste the schematic with chunk-safe callback
             Schematic.pasteSchematic(
@@ -141,7 +163,7 @@ public class FitAnything {
                     schematicOffset,
                     prePasteCallback,
                     pedestalMaterialProvider,
-                    onPasteComplete(fitAnything, location)
+                    onPasteResult
             );
         };
 

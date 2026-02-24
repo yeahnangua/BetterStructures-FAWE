@@ -63,7 +63,7 @@ public class FitSurfaceBuilding extends FitAnything {
 
         //Bukkit.broadcastMessage("Fit with score = " + highestScore);
 
-        super.paste(location);
+        super.paste(location, chunk);
     }
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {

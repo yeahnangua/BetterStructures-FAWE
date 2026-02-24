@@ -1,5 +1,6 @@
 package com.magmaguy.betterstructures.buildingfitter;
 
+import com.magmaguy.betterstructures.buildingfitter.util.EndHeightClamp;
 import com.magmaguy.betterstructures.buildingfitter.util.TerrainAdequacy;
 import com.magmaguy.betterstructures.config.DefaultConfig;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
@@ -200,25 +201,33 @@ public class FitUndergroundBuilding extends FitAnything {
         schematicOffset = WorldEditUtils.getSchematicOffset(schematicClipboard);
 
         //Make sure the schematic will not go beyond the bedrock level
+        int offsetYAbs = (int) Math.abs(schematicOffset.getY());
+        int schematicHeight = schematicClipboard.getRegion().getHeight();
         switch (originalLocation.getWorld().getEnvironment()) {
             case NORMAL:
             case CUSTOM:
-                if (originalLocation.getY() - Math.abs(schematicOffset.getY()) < DefaultConfig.getLowestYNormalCustom())
-                    originalLocation.setY(DefaultConfig.getLowestYNormalCustom() + 1 + Math.abs(schematicOffset.getY()));
-                else if (originalLocation.getY() + Math.abs(schematicOffset.getY()) - schematicClipboard.getRegion().getHeight() > DefaultConfig.getHighestYNormalCustom())
-                    originalLocation.setY(DefaultConfig.getHighestYNormalCustom() - schematicClipboard.getRegion().getHeight() + Math.abs(schematicOffset.getY()));
+                originalLocation.setY(EndHeightClamp.clamp(
+                        originalLocation.getBlockY(),
+                        DefaultConfig.getHighestYNormalCustom(),
+                        DefaultConfig.getLowestYNormalCustom(),
+                        schematicHeight,
+                        offsetYAbs));
                 break;
             case NETHER:
-                if (originalLocation.getY() - Math.abs(schematicOffset.getY()) < DefaultConfig.getLowestYNether())
-                    originalLocation.setY(DefaultConfig.getLowestYNether() + 1 + Math.abs(schematicOffset.getY()));
-                else if (originalLocation.getY() + Math.abs(schematicOffset.getY()) - schematicClipboard.getRegion().getHeight() > DefaultConfig.getHighestYNether())
-                    originalLocation.setY(DefaultConfig.getHighestYNether() - schematicClipboard.getRegion().getHeight() + Math.abs(schematicOffset.getY()));
+                originalLocation.setY(EndHeightClamp.clamp(
+                        originalLocation.getBlockY(),
+                        DefaultConfig.getHighestYNether(),
+                        DefaultConfig.getLowestYNether(),
+                        schematicHeight,
+                        offsetYAbs));
                 break;
             case THE_END:
-                if (originalLocation.getY() - Math.abs(schematicOffset.getY()) < DefaultConfig.getLowestYEnd())
-                    originalLocation.setY(DefaultConfig.getLowestYEnd() + 1 + Math.abs(schematicOffset.getY()));
-                else if (originalLocation.getY() + Math.abs(schematicOffset.getY()) - schematicClipboard.getRegion().getHeight() > DefaultConfig.getLowestYEnd())
-                    originalLocation.setY(DefaultConfig.getLowestYEnd() - schematicClipboard.getRegion().getHeight() + Math.abs(schematicOffset.getY()));
+                originalLocation.setY(EndHeightClamp.clamp(
+                        originalLocation.getBlockY(),
+                        DefaultConfig.getHighestYEnd(),
+                        DefaultConfig.getLowestYEnd(),
+                        schematicHeight,
+                        offsetYAbs));
                 break;
         }
 
@@ -233,10 +242,11 @@ public class FitUndergroundBuilding extends FitAnything {
                 if (highestScore > 90) break;
             }
 
-        if (location == null)
+        if (location == null) {
             return;
+        }
 
-        paste(location);
+        paste(location, chunk);
     }
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {

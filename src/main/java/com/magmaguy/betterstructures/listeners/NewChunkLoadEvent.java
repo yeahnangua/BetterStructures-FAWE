@@ -9,6 +9,7 @@ import com.magmaguy.betterstructures.buildingfitter.util.FitUndergroundDeepBuild
 import com.magmaguy.betterstructures.config.DefaultConfig;
 import com.magmaguy.betterstructures.config.ValidWorldsConfig;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
+import com.magmaguy.betterstructures.util.ChunkProcessingMarker;
 import com.magmaguy.betterstructures.util.ChunkValidationUtil;
 import com.magmaguy.magmacore.util.Logger;
 import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsConfig;
@@ -17,13 +18,10 @@ import com.magmaguy.betterstructures.modules.WFCGenerator;
 import com.magmaguy.betterstructures.schematics.SchematicContainer;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
-import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
@@ -36,38 +34,23 @@ import java.util.concurrent.ThreadLocalRandom;
 public class NewChunkLoadEvent implements Listener {
 
     private static final Set<Chunk> loadingChunks = ConcurrentHashMap.newKeySet();
-    private static final NamespacedKey PROCESSED_KEY = new NamespacedKey("betterstructures", "chunk_processed");
-
-    /**
-     * Checks whether BetterStructures has already processed this chunk.
-     */
-    private boolean isChunkProcessed(Chunk chunk) {
-        return chunk.getPersistentDataContainer().has(PROCESSED_KEY, PersistentDataType.BYTE);
-    }
-
-    /**
-     * Marks a chunk as processed by BetterStructures.
-     */
-    private void markChunkProcessed(Chunk chunk) {
-        chunk.getPersistentDataContainer().set(PROCESSED_KEY, PersistentDataType.BYTE, (byte) 1);
-    }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChunkLoad(ChunkLoadEvent event) {
-        if (isChunkProcessed(event.getChunk())) return;
-        if (loadingChunks.contains(event.getChunk())) return;
+        Chunk chunk = event.getChunk();
+        if (ChunkProcessingMarker.isProcessed(chunk)) {
+            Logger.debug("SKIP_PROCESSED: " + chunk.getWorld().getName() + " " + chunk.getX() + "," + chunk.getZ());
+            return;
+        }
+        if (!loadingChunks.add(chunk)) return;
         //In some cases the same chunk gets loaded (at least at an event level) several times, this prevents the plugin from doing multiple scans and placing multiple builds, enhancing performance
-        loadingChunks.add(event.getChunk());
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                loadingChunks.remove(event.getChunk());
-            }
-        }.runTaskLater(MetadataHandler.PLUGIN, 20L);
-        if (!ValidWorldsConfig.isValidWorld(event.getWorld())) return;
+        if (!ValidWorldsConfig.isValidWorld(event.getWorld())) {
+            loadingChunks.remove(chunk);
+            return;
+        }
 
         // Schedule delayed scanning with validation (Terra/FAWE compatibility)
-        scheduleStructureScan(event.getChunk(), 0);
+        scheduleStructureScan(chunk, 0);
     }
 
     /**
@@ -93,31 +76,30 @@ public class NewChunkLoadEvent implements Listener {
             public void run() {
                 // Validate chunk is still loaded
                 if (!chunk.isLoaded()) {
+                    Logger.debug("SCAN_FAILED: chunk_unloaded " + chunk.getWorld().getName() + " "
+                            + chunk.getX() + "," + chunk.getZ() + " attempt=" + attemptNumber);
+                    loadingChunks.remove(chunk);
                     return;
                 }
 
-                // Validate chunk is fully ready (ENTITY_TICKING level for Paper, FAWE compatibility)
+                // Validate chunk is ready for scanning (BORDER+ load level for Paper, FAWE compatibility)
                 if (!ChunkValidationUtil.isChunkFullyReady(chunk)) {
                     if (attemptNumber < maxAttempts) {
                         // Retry with same delay
                         scheduleStructureScan(chunk, attemptNumber + 1);
                         return;
                     }
-                    // Max retries reached, proceed anyway to avoid stuck structures
+                    Logger.debug("SCAN_FAILED: retries_exhausted " + chunk.getWorld().getName() + " "
+                            + chunk.getX() + "," + chunk.getZ() + " attempts=" + (attemptNumber + 1));
+                    loadingChunks.remove(chunk);
+                    return;
                 }
 
                 // Run terrain scanning asynchronously to avoid blocking the main thread.
                 // All scan operations (getBlock, getHighestBlockAt, etc.) are read-only
                 // and safe to call from async threads on Paper servers.
-                Bukkit.getScheduler().runTaskAsynchronously(MetadataHandler.PLUGIN, () -> {
-                    runScanners(chunk);
-                    // markChunkProcessed writes to PersistentDataContainer, must be on main thread
-                    Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
-                        if (chunk.isLoaded()) {
-                            markChunkProcessed(chunk);
-                        }
-                    });
-                });
+                Bukkit.getScheduler().runTaskAsynchronously(MetadataHandler.PLUGIN, () -> runScanners(chunk));
+                loadingChunks.remove(chunk);
             }
         }.runTaskLater(MetadataHandler.PLUGIN, finalDelayTicks);
     }

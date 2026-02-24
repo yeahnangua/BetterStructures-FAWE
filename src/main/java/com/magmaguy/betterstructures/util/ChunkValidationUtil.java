@@ -1,14 +1,8 @@
 package com.magmaguy.betterstructures.util;
 
-import com.magmaguy.betterstructures.config.DefaultConfig;
-import com.magmaguy.magmacore.util.Logger;
 import org.bukkit.Chunk;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Utility class for validating chunk generation state.
@@ -29,167 +23,106 @@ public class ChunkValidationUtil {
      * @return true if the chunk appears fully generated, false if null, unloaded, or incomplete
      */
     public static boolean isChunkFullyGenerated(Chunk chunk) {
-        if (chunk == null || !chunk.isLoaded()) return false;
+        return getChunkGenerationFailureReason(chunk) == null;
+    }
+
+    /**
+     * Returns a detailed failure reason when a chunk is considered not fully generated.
+     * Returns null when the chunk passes validation.
+     *
+     * @param chunk the chunk to validate
+     * @return null if valid; otherwise a short reason string for diagnostics
+     */
+    public static String getChunkGenerationFailureReason(Chunk chunk) {
+        if (chunk == null) return "chunk_null";
+        if (!chunk.isLoaded()) return "chunk_unloaded";
 
         try {
             World world = chunk.getWorld();
+            boolean isEnd = world.getEnvironment() == World.Environment.THE_END;
+
+            // End islands naturally contain huge air spans; only require the chunk to be actually generated.
+            boolean generated = true;
+            try {
+                generated = chunk.isGenerated();
+            } catch (NoSuchMethodError ignored) {
+                // Older API versions may not expose isGenerated; keep legacy heuristic behavior.
+            }
+            if (!generated) {
+                return "chunk_not_generated,env=" + world.getEnvironment();
+            }
+            if (isEnd) {
+                return null;
+            }
+
             int baseX = chunk.getX() << 4;
             int baseZ = chunk.getZ() << 4;
 
-            // Sample 4 positions: center and edges
-            int[][] offsets = {
+            int[][] offsets = new int[][]{
                     {0, 7},
                     {7, 0},
                     {15, 7},
                     {7, 15}
             };
 
+            int airOnlyThreshold = 3;
+            int voidAirThreshold = 2;
+
             int airOnlyColumns = 0;
             int voidAirCount = 0;
+            int minHeight = world.getMinHeight();
+            int checkY = (world.getMaxHeight() + minHeight) / 2;
 
             for (int[] offset : offsets) {
                 int x = baseX + offset[0];
                 int z = baseZ + offset[1];
                 int highestY = world.getHighestBlockYAt(x, z);
 
-                if (highestY <= world.getMinHeight()) {
+                if (highestY <= minHeight) {
                     airOnlyColumns++;
                 }
 
-                // Use sea level or mid-point as reference height (adapts to different world types)
-                int checkY = (world.getMaxHeight() + world.getMinHeight()) / 2;
                 if (world.getBlockAt(x, checkY, z).getType() == Material.VOID_AIR) {
                     voidAirCount++;
                 }
             }
 
-            if (airOnlyColumns >= 3 || voidAirCount >= 2) {
-                return false;
+            if (airOnlyColumns >= airOnlyThreshold || voidAirCount >= voidAirThreshold) {
+                return "air_only_columns=" + airOnlyColumns
+                        + ",void_air_count=" + voidAirCount
+                        + ",thresholds=air_only>=" + airOnlyThreshold + "|void_air>=" + voidAirThreshold
+                        + ",sample_count=" + offsets.length
+                        + ",env=" + world.getEnvironment()
+                        + ",check_y=" + checkY
+                        + ",min_y=" + minHeight;
             }
 
-            return true;
+            return null;
         } catch (Exception e) {
             // Don't block structure placement on validation errors
-            return true;
+            return null;
         }
     }
 
     /**
-     * Validates that all chunks within a block coordinate range are loaded and fully generated.
-     * Respects the validateChunkBeforePaste config option; if disabled, always returns true.
-     *
-     * @param world the world to check in
-     * @param minX  minimum block X coordinate
-     * @param minZ  minimum block Z coordinate
-     * @param maxX  maximum block X coordinate
-     * @param maxZ  maximum block Z coordinate
-     * @return true if all chunks in the range are ready, false otherwise
-     */
-    public static boolean areChunksReadyForStructure(World world, int minX, int minZ, int maxX, int maxZ) {
-        if (!DefaultConfig.isValidateChunkBeforePaste()) return true;
-
-        int minChunkX = minX >> 4;
-        int minChunkZ = minZ >> 4;
-        int maxChunkX = maxX >> 4;
-        int maxChunkZ = maxZ >> 4;
-
-        for (int cx = minChunkX; cx <= maxChunkX; cx++) {
-            for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
-                if (!world.isChunkLoaded(cx, cz)) {
-                    return false;
-                }
-                if (!isChunkFullyGenerated(world.getChunkAt(cx, cz))) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Calculates the set of chunk coordinates required for a structure at the given location.
-     * Includes a 1-chunk padding around the structure footprint (effectively 3x3 for single-chunk structures)
-     * to ensure surrounding terrain is ready for WorldEdit pasting.
-     * Each entry is a string in the format "cx,cz".
-     *
-     * @param location the origin location of the structure
-     * @param width    the width of the structure in blocks (X axis)
-     * @param depth    the depth of the structure in blocks (Z axis)
-     * @return a set of chunk coordinate strings covering the structure footprint plus padding
-     */
-    public static Set<String> getRequiredChunks(Location location, int width, int depth) {
-        Set<String> chunks = new HashSet<>();
-
-        int minChunkX = (location.getBlockX() >> 4) - 1;
-        int minChunkZ = (location.getBlockZ() >> 4) - 1;
-        int maxChunkX = ((location.getBlockX() + width) >> 4) + 1;
-        int maxChunkZ = ((location.getBlockZ() + depth) >> 4) + 1;
-
-        for (int cx = minChunkX; cx <= maxChunkX; cx++) {
-            for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
-                chunks.add(cx + "," + cz);
-            }
-        }
-
-        return chunks;
-    }
-
-    /**
-     * Checks if a chunk has reached ENTITY_TICKING load level (fully ready).
-     * This is the highest load level, meaning the chunk is fully loaded,
-     * all neighbors are loaded, and entities can tick.
-     *
-     * This provides better compatibility with FAWE and async world generators
-     * by ensuring the chunk is completely ready before structure placement.
+     * Checks if a chunk has reached at least BORDER load level.
+     * BORDER/TICKING/ENTITY_TICKING are treated as ready for scanning.
      *
      * @param chunk the chunk to check
-     * @return true if the chunk is at ENTITY_TICKING level, false otherwise
+     * @return true if the chunk is at least BORDER level, false otherwise
      */
     public static boolean isChunkFullyReady(Chunk chunk) {
         if (chunk == null || !chunk.isLoaded()) return false;
 
         try {
-            // Paper API: Check if chunk has reached the highest load level
-            // ENTITY_TICKING means chunk is fully loaded with all neighbors ready
-            return chunk.getLoadLevel() == Chunk.LoadLevel.ENTITY_TICKING;
+            Chunk.LoadLevel loadLevel = chunk.getLoadLevel();
+            return loadLevel == Chunk.LoadLevel.BORDER
+                    || loadLevel == Chunk.LoadLevel.TICKING
+                    || loadLevel == Chunk.LoadLevel.ENTITY_TICKING;
         } catch (NoSuchMethodError | NoClassDefFoundError e) {
             // Fallback for non-Paper servers: use basic generation check
             return isChunkFullyGenerated(chunk);
         }
     }
 
-    /**
-     * Checks if a chunk and all its immediate neighbors (3x3 area) are fully ready.
-     * This is important for structure placement as structures often span multiple chunks.
-     *
-     * @param chunk the center chunk to check
-     * @return true if the center chunk and all 8 neighbors are fully ready
-     */
-    public static boolean isChunkAreaFullyReady(Chunk chunk) {
-        if (chunk == null) return false;
-
-        World world = chunk.getWorld();
-        int cx = chunk.getX();
-        int cz = chunk.getZ();
-
-        // Check 3x3 area centered on the chunk
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                int checkX = cx + dx;
-                int checkZ = cz + dz;
-
-                if (!world.isChunkLoaded(checkX, checkZ)) {
-                    return false;
-                }
-
-                Chunk neighborChunk = world.getChunkAt(checkX, checkZ);
-                if (!isChunkFullyReady(neighborChunk)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
 }
