@@ -50,6 +50,12 @@ dependencies {
     compileOnly group: 'com.sk89q.worldguard', name: 'worldguard-bukkit', version: '7.0.7'
     compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.3.0'
     compileOnly 'io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
 }
 
 //This allows any modules tagged as changing to be updated every time, which is extremely convenient for some of the shaded libs
