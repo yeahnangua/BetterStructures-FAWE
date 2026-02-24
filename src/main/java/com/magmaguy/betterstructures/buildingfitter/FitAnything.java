@@ -42,6 +42,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class FitAnything {
@@ -133,6 +134,15 @@ public class FitAnything {
 
             // Create a function to provide pedestal material
             Function<Boolean, Material> pedestalMaterialProvider = this::getPedestalMaterial;
+            Consumer<Boolean> onPasteResult = success -> {
+                if (success) {
+                    onPasteComplete(fitAnything, location).run();
+                } else {
+                    Logger.debug("PASTE_FAILED: " + location.getWorld().getName() + " "
+                            + location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ()
+                            + " schematic=" + schematicContainer.getConfigFilename());
+                }
+            };
 
             // Paste the schematic with chunk-safe callback
             Schematic.pasteSchematic(
@@ -141,7 +151,7 @@ public class FitAnything {
                     schematicOffset,
                     prePasteCallback,
                     pedestalMaterialProvider,
-                    onPasteComplete(fitAnything, location)
+                    onPasteResult
             );
         };
 

@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Schematic {
@@ -131,11 +132,12 @@ public class Schematic {
             Vector schematicOffset,
             Runnable prePasteCallback,
             Function<Boolean, Material> pedestalMaterialProvider,
-            Runnable onComplete) {
+            Consumer<Boolean> onComplete) {
 
         org.bukkit.World world = location.getWorld();
         if (world == null) {
             Logger.warn("无法粘贴: 世界为空");
+            if (onComplete != null) onComplete.accept(false);
             return;
         }
 
@@ -188,11 +190,12 @@ public class Schematic {
             Location location,
             Vector schematicOffset,
             Function<Boolean, Material> pedestalMaterialProvider,
-            Runnable onComplete,
+            Consumer<Boolean> onComplete,
             Set<Long> requiredChunks,
             org.bukkit.World bukkitWorld) {
 
         Bukkit.getScheduler().runTaskAsynchronously(MetadataHandler.PLUGIN, () -> {
+            boolean success = true;
             try {
                 World weWorld = BukkitAdapter.adapt(bukkitWorld);
                 Location adjustedLocation = location.clone().add(schematicOffset);
@@ -240,18 +243,20 @@ public class Schematic {
                 } // EditSession auto-closes and flushes
 
             } catch (Exception e) {
+                success = false;
                 Logger.warn("FAWE 异步粘贴失败: " + e.getMessage());
                 e.printStackTrace();
             }
 
             // Step 5: Back to main thread — release chunk tickets and run onComplete
+            boolean finalSuccess = success;
             Bukkit.getScheduler().runTask(MetadataHandler.PLUGIN, () -> {
                 for (Long key : requiredChunks) {
                     int chunkX = (int) (key >> 32);
                     int chunkZ = key.intValue();
                     bukkitWorld.removePluginChunkTicket(chunkX, chunkZ, MetadataHandler.PLUGIN);
                 }
-                if (onComplete != null) onComplete.run();
+                if (onComplete != null) onComplete.accept(finalSuccess);
             });
         });
     }
