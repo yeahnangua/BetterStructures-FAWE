@@ -125,7 +125,7 @@ public class WFCGenerator {
         List<String> startModules = moduleGeneratorsConfigFields.getStartModules();
         if (startModules.isEmpty()) {
             if (player != null) player.sendMessage("没有起始模块，你需要先安装或制作模块！");
-            Logger.warn("没有起始模块，你需要先安装或制作模块！");
+            Logger.warn("No start modules found. Install or create modules first!");
             cancel();
             return;
         }
@@ -185,7 +185,7 @@ public class WFCGenerator {
             generateFast();
 
         } catch (Exception e) {
-            Logger.warn("生成过程中出错: " + e.getMessage());
+            Logger.warn("An error occurred during generation: " + e.getMessage());
             e.printStackTrace();
             cleanup();
         }
@@ -196,7 +196,7 @@ public class WFCGenerator {
 
         ModulesContainer modulesContainer = ModulesContainer.getModulesContainers().get(startingModule);
         if (modulesContainer == null) {
-            Logger.warn("起始模块为空！正在取消！");
+            Logger.warn("Start module is null! Cancelling generation!");
             return null;
         }
 
@@ -262,7 +262,7 @@ public class WFCGenerator {
         rollbackCounter++;
         if (rollbackCounter > 1000) {
             updateProgressBar("生成失败 - 超过回溯限制");
-            Logger.warn("超过回溯限制！");
+            Logger.warn("Backtracking limit exceeded!");
             cancel();
             //retry
             if (player != null) new WFCGenerator(moduleGeneratorsConfigFields, player);

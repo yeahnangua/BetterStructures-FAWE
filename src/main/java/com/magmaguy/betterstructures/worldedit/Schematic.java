@@ -59,14 +59,14 @@ public class Schematic {
             e.printStackTrace();
             return null;
         } catch (NoSuchElementException e) {
-            Logger.warn("从建筑模板获取元素失败 " + schematicFile.getName());
+            Logger.warn("Failed to get element from schematic " + schematicFile.getName());
             e.printStackTrace();
             return null;
         } catch (Exception e) {
-            Logger.warn("加载建筑模板 " + schematicFile.getName() + " 失败！99% 的情况下，这是因为你没有使用与你的 Minecraft 服务器匹配的 WorldEdit 版本。请从这里下载 WorldEdit: https://dev.bukkit.org/projects/worldedit 。你可以将鼠标悬停在下载链接上查看兼容的版本。");
+            Logger.warn("Failed to load schematic " + schematicFile.getName() + "! In most cases this is caused by a WorldEdit version mismatch with your Minecraft server. Download a compatible WorldEdit version here: https://dev.bukkit.org/projects/worldedit");
             erroredOnce = true;
             if (!erroredOnce) e.printStackTrace();
-            else Logger.warn("隐藏此错误的堆栈跟踪，因为已经打印过一次");
+            else Logger.warn("Hiding this stack trace because it has already been printed once");
             return null;
         }
         return clipboard;
@@ -141,7 +141,7 @@ public class Schematic {
 
         org.bukkit.World world = location.getWorld();
         if (world == null) {
-            Logger.warn("无法粘贴: 世界为空");
+            Logger.warn("Cannot paste: world is null");
             if (onComplete != null) onComplete.accept(failureResult("world_null"));
             return;
         }
@@ -310,7 +310,7 @@ public class Schematic {
                 success = false;
                 String exceptionMessage = e.getMessage() == null ? "" : (":" + e.getMessage());
                 failureReason = "fawe_exception:" + e.getClass().getSimpleName() + exceptionMessage;
-                Logger.warn("FAWE 异步粘贴失败: " + e.getMessage());
+                Logger.warn("FAWE async paste failed: " + e.getMessage());
                 e.printStackTrace();
             }
 

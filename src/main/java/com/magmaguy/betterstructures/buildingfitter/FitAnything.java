@@ -202,33 +202,33 @@ public class FitAnything {
                     try {
                         addPedestal(location);
                     } catch (Exception exception) {
-                        Logger.warn("分配基座材料失败！");
+                        Logger.warn("Failed to assign pedestal material!");
                         exception.printStackTrace();
                     }
                     try {
                         if (fitAnything instanceof FitSurfaceBuilding)
                             clearTrees(location);
                     } catch (Exception exception) {
-                        Logger.warn("清除树木失败！");
+                        Logger.warn("Failed to clear trees!");
                         exception.printStackTrace();
                     }
                 }
                 try {
                     fillChests();
                 } catch (Exception exception) {
-                    Logger.warn("填充箱子失败！");
+                    Logger.warn("Failed to fill chests!");
                     exception.printStackTrace();
                 }
                 try {
                     spawnEntities();
                 } catch (Exception exception) {
-                    Logger.warn("生成实体失败！");
+                    Logger.warn("Failed to spawn entities!");
                     exception.printStackTrace();
                 }
                 try{
                     spawnProps(fitAnything.schematicClipboard);
                 } catch (Exception exception) {
-                    Logger.warn("生成装饰物失败！");
+                    Logger.warn("Failed to spawn decorations!");
                     exception.printStackTrace();
                 }
             }
@@ -359,7 +359,7 @@ public class FitAnything {
             for (Vector chestPosition : schematicContainer.getChestLocations()) {
                 Location chestLocation = LocationProjector.project(location, schematicOffset, chestPosition);
                 if (!(chestLocation.getBlock().getState() instanceof Container container)) {
-                    Logger.warn("预期 " + chestLocation.getBlock().getType() + " 是容器但未获取到。跳过此战利品！");
+                    Logger.warn("Expected " + chestLocation.getBlock().getType() + " to be a container but it was not. Skipping this loot roll!");
                     continue;
                 }
 
@@ -472,7 +472,7 @@ public class FitAnything {
                         trackingIdentifier = mmBossId;
                     }
                 } else {
-                    Logger.warn("MythicMobs Boss 列表为空！无法替换 EliteMobs Boss: " + bossFilename);
+                    Logger.warn("MythicMobs boss list is empty! Cannot replace EliteMobs boss: " + bossFilename);
                 }
             }
 
@@ -508,7 +508,7 @@ public class FitAnything {
                 } else {
                     if (!worldGuardWarn) {
                         worldGuardWarn = true;
-                        Logger.warn("你未使用 WorldGuard，因此 BetterStructures 无法保护Boss竞技场！建议使用 WorldGuard 以保证公平的战斗体验。");
+                        Logger.warn("WorldGuard is not enabled, so BetterStructures cannot protect boss arenas! Installing WorldGuard is recommended for fair fights.");
                     }
                 }
             }

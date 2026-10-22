@@ -53,10 +53,10 @@ public class MythicMobs {
         String mobId = args[0];
         MythicMob mob = MythicBukkit.inst().getMobManager().getMythicMob(mobId).orElse(null);
         if (mob == null) {
-            Logger.warn("生成区域Boss失败！未找到 MythicMob ID: '" + mobId + "'");
-            Logger.warn("  - 原始文件名参数: " + filename);
-            Logger.warn("  - 位置: " + location.getWorld().getName() + " at " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
-            Logger.warn("  - 请确保在 ~/plugins/MythicMobs/Mobs/ 中存在具有此 ID 的生物");
+            Logger.warn("Failed to spawn regional boss! MythicMob ID not found: '" + mobId + "'");
+            Logger.warn("  - Original filename parameter: " + filename);
+            Logger.warn("  - Location: " + location.getWorld().getName() + " at " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
+            Logger.warn("  - Make sure a mob with this ID exists in ~/plugins/MythicMobs/Mobs/");
             return null;
         }
 
@@ -64,7 +64,7 @@ public class MythicMobs {
         try {
             level = Double.parseDouble(args[1]);
         } catch (Exception e) {
-            Logger.warn("解析生物等级失败 " + filename + "！");
+            Logger.warn("Failed to parse mob level: " + filename + "!");
             return null;
         }
 
@@ -116,7 +116,7 @@ public class MythicMobs {
         cacheBuilt = false;
 
         if (Bukkit.getPluginManager().getPlugin("MythicMobs") == null) {
-            Logger.warn("MythicMobs 覆盖已启用，但 MythicMobs 插件未安装！");
+            Logger.warn("MythicMobs override is enabled, but MythicMobs is not installed!");
             return;
         }
 
@@ -148,12 +148,12 @@ public class MythicMobs {
             typeMappingCache = mapping;
             cacheBuilt = true;
 
-            Logger.info("MythicMobs 类型映射缓存已构建: " + mapping.size() + " 个原版类型已映射");
+            Logger.info("MythicMobs type mapping cache built: " + mapping.size() + " vanilla types mapped");
             for (Map.Entry<EntityType, List<String>> entry : mapping.entrySet()) {
                 Logger.info("  " + entry.getKey().name() + " → " + entry.getValue());
             }
         } catch (Exception e) {
-            Logger.warn("构建 MythicMobs 类型映射缓存失败: " + e.getMessage());
+            Logger.warn("Failed to build MythicMobs type mapping cache: " + e.getMessage());
             e.printStackTrace();
         }
     }
