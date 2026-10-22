@@ -31,7 +31,7 @@ public class EliteMobs {
         if (Bukkit.getPluginManager().getPlugin("EliteMobs") != null) {
             RegionalBossEntity regionalBossEntity = RegionalBossEntity.SpawnRegionalBoss(filename, location);
             if (regionalBossEntity == null) {
-                Logger.warn("生成区域Boss失败 " + filename + "！该Boss的文件名可能与 ~/plugins/EliteMobs/custombosses/ 中的文件名不匹配");
+                Logger.warn("Failed to spawn regional boss " + filename + "! The boss filename may not match a file in ~/plugins/EliteMobs/custombosses/");
                 return null;
             } else {
                 regionalBossEntity.spawn(false);

@@ -117,7 +117,7 @@ public final class ModulePasting {
         try {
             transformedClipboard = clipboard.transform(transform);
         } catch (WorldEditException e) {
-            Logger.warn("变换剪贴板失败: " + e.getMessage());
+            Logger.warn("Failed to transform clipboard: " + e.getMessage());
             throw new RuntimeException(e);
         }
 
@@ -154,14 +154,14 @@ public final class ModulePasting {
                     editSession.setBlock(worldPos, baseBlock);
 
                 } catch (WorldEditException e) {
-                    Logger.warn("放置方块失败 " + blockPos + ": " + e.getMessage());
+                    Logger.warn("Failed to place block " + blockPos + ": " + e.getMessage());
                 }
             });
 
             pasteArmorStands(transformedClipboard, location, rotation);
 
         } catch (Exception e) {
-            Logger.warn("粘贴建筑失败: " + e.getMessage());
+            Logger.warn("Failed to paste structure: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -178,7 +178,7 @@ public final class ModulePasting {
         try {
             transformedClipboard = clipboard.transform(transform);
         } catch (WorldEditException e) {
-            Logger.warn("变换实体剪贴板失败: " + e.getMessage());
+            Logger.warn("Failed to transform entity clipboard: " + e.getMessage());
             return;
         }
 
@@ -237,7 +237,7 @@ public final class ModulePasting {
                             EntityType entityType = EntityType.valueOf(lines.get(1).toUpperCase());
                             entitiesToSpawn.add(new EntitySpawn(pasteLocation, entityType));
                         } catch (Exception e) {
-                            Logger.warn("告示牌中的实体类型无效: " + lines.get(1));
+                            Logger.warn("Invalid entity type on sign: " + lines.get(1));
                         }
                     } else if (line.contains("[chest]")) {
                         chestsToPlace.add(new ChestPlacement(pasteLocation, Material.CHEST, rotation));
@@ -304,7 +304,7 @@ public final class ModulePasting {
                 entityPasteInfos.add(new EntityPasteInfo(transformedClipboard, WFCNode.getRealLocation(startLocation),
                         WFCNode.getModulesContainer().getRotation()));
             } catch (WorldEditException e) {
-                Logger.warn("变换实体剪贴板失败: " + e.getMessage());
+                Logger.warn("Failed to transform entity clipboard: " + e.getMessage());
             }
         }
 
@@ -330,7 +330,7 @@ public final class ModulePasting {
                         try {
                             editSession.setBlock(pos, pasteable.baseBlock);
                         } catch (WorldEditException e) {
-                            Logger.warn("设置方块失败 " + pasteable.location + ": " + e.getMessage());
+                            Logger.warn("Failed to set block " + pasteable.location + ": " + e.getMessage());
                         }
                     }
 
@@ -343,7 +343,7 @@ public final class ModulePasting {
                         try {
                             editSession.setBlock(pos, np.baseBlock());
                         } catch (WorldEditException e) {
-                            Logger.warn("设置NBT方块失败 " + np.location() + ": " + e.getMessage());
+                            Logger.warn("Failed to set NBT block " + np.location() + ": " + e.getMessage());
                         }
                     }
 
@@ -358,13 +358,13 @@ public final class ModulePasting {
                                 editSession.setBlock(pos, BukkitAdapter.adapt(Material.STONE.createBlockData()));
                             }
                         } catch (WorldEditException e) {
-                            Logger.warn("处理bedrock候选方块失败 " + bc.location() + ": " + e.getMessage());
+                            Logger.warn("Failed to process bedrock candidate block " + bc.location() + ": " + e.getMessage());
                         }
                     }
                 } // EditSession auto-closes and flushes
 
             } catch (Exception e) {
-                Logger.warn("FAWE 异步地牢粘贴失败: " + e.getMessage());
+                Logger.warn("FAWE async dungeon paste failed: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -414,7 +414,7 @@ public final class ModulePasting {
                 entity.setRemoveWhenFarAway(false);
                 entity.setPersistent(true);
             } catch (Exception e) {
-                Logger.warn("生成实体失败，类型 " + entitySpawn.entityType + " at " + entitySpawn.location);
+                Logger.warn("Failed to spawn entity, type " + entitySpawn.entityType + " at " + entitySpawn.location);
             }
         }
     }
@@ -425,7 +425,7 @@ public final class ModulePasting {
             try {
                 WorldEditUtils.pasteArmorStandsOnlyFromTransformed(info.clipboard, info.location);
             } catch (Exception e) {
-                Logger.warn("批量粘贴实体失败 " + info.location + ": " + e.getMessage());
+                Logger.warn("Failed to batch paste entities at " + info.location + ": " + e.getMessage());
             }
         }
     }

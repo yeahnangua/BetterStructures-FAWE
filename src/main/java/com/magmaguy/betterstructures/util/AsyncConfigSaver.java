@@ -35,7 +35,7 @@ public class AsyncConfigSaver {
             try {
                 Files.writeString(file.toPath(), data, StandardCharsets.UTF_8);
             } catch (IOException e) {
-                Logger.warn("异步保存配置失败: " + file.getName());
+                Logger.warn("Failed to save config asynchronously: " + file.getName());
                 e.printStackTrace();
             }
         });
